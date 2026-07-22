@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <title>対話型 背景画像生成システム</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="自然言語での評価を取り入れた対話型遺伝的アルゴリズム（IGA）による画像生成システムの評価実験用ページです。">
+    <link rel="shortcut icon" href="./assets/images/favicon.png" type="image/x-icon">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="format-detection" content="email=no,telephone=no,address=no">
+
+    <link rel="stylesheet" href="./style/ress_min.css">
+    <link rel="stylesheet" href="./style/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-icon" style="font-weight: bold; font-size: 1.2rem; margin-left: 10px; color: #333;">
+            対話型 背景画像生成システム
+        </div>
+        <div class="header-control">
+            <!-- <button onclick="location.href = './'">最初から</button> -->
+            <button id="toggleTheme">テーマ</button>
+            <button id="toggleManual">使い方</button>
+        </div>
+    </header>
+    <main id="main">
+        <p id="msg-ReadFiles" class="msg-loading">必要なファイルを読み込んでいます...</p>
+        <!-- _appendGenCycle.jsで自動生成 -->
+    </main>
+    <div class="manualPopup" id="manualPopup">
+        <!-- 
+        #MARK: 使い方
+        -->
+        <h2>使い方</h2>
+        <ol>
+            <li><strong>最初のイメージ入力：</strong> 最初の画面にイメージを入力する欄があります。あなたが欲しい画像の雰囲気（色や柄など）をテキストで入力して生成を開始します。</li>
+            <li>2枚の画像が出現します。</li>
+            <img src="./assets/images/convasation_initial.png" alt="メイン画面">
+            <li>
+                出現した画像の下にテキストエリアがありますので、次世代に求めるものを入力してください。<br>
+            </li>
+            
+            <h3>入力について</h3>
+            <ul>
+                <li>文章は読点や改行、()で区切られます。</li>
+                <li>1文に趣旨は1つまでにすると、混乱を招きにくくなります。そのため、「だけど」「しかし」などは避け、別の文にすることを推奨します。</li>
+                <li>平易な語彙を使うと、文章を汲み取ってもらえやすくなります。</li>
+            </ul>
+            
+            <h3>入力例</h3>
+            <ul>
+                <li>出力に言及。例：「右が好き」「左は嫌い」など。</li>
+                <li>好き嫌い。例：「クールで好き」「ちかちかするのは嫌」など。</li>
+                <li>欲しいポイント。例：「もっとさわやかな感じが良い」など。</li>
+                <li><strong>色・図形の指定。例：「青くして」「赤と白にして」「丸にして」「三角と四角を使って」など。</strong><br>
+                    <span style="color: #d32f2f; font-size: 0.9em; font-weight: bold;">※ワンポイントアドバイス：色を指定する際は、「黄色」よりも「黄にして」「黄と黒」のようにシンプルに入力した方が、意図がより正確に反映されやすくなります。</span>
+                </li>
+                <li><strong>柄・質感の指定。例：「ストライプ柄にして」「チェック柄にして」「ドット柄にして」「ふわふわにして」「ネオンっぽくして」など。</strong></li>
+            </ul>
+
+            <h3>柄（模様）の種類について</h3>
+            <p>以下の柄の名前を評価文に入力することで、デザインに反映させることができます。</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; justify-content: center;">
+                
+                <div style="width: 100px; display: flex; flex-direction: column; align-items: center;">
+                    <img src="./assets/images/pattern_stripe.png" alt="ストライプ" style="width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                    <p style="font-size: 12px; margin-top: 5px; line-height: 1.4; min-height: 2.8em; text-align: center; width: 100%;">ストライプ</p>
+                </div>
+                <div style="width: 100px; display: flex; flex-direction: column; align-items: center;">
+                    <img src="./assets/images/pattern_windowpane.png" alt="ウィンドウペーン" style="width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                    <p style="font-size: 12px; margin-top: 5px; line-height: 1.4; min-height: 2.8em; text-align: center; width: 100%;">ウィンドウペーン</p>
+                </div>
+                <div style="width: 100px; display: flex; flex-direction: column; align-items: center;">
+                    <img src="./assets/images/pattern_dot.png" alt="ドット" style="width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                    <p style="font-size: 12px; margin-top: 5px; line-height: 1.4; min-height: 2.8em; text-align: center; width: 100%;">ドット</p>
+                </div>
+                <div style="width: 100px; display: flex; flex-direction: column; align-items: center;">
+                    <img src="./assets/images/pattern_gingham.png" alt="ギンガムチェック" style="width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                    <!-- 長い名前は変なところで改行されないよう <br> を入れています -->
+                    <p style="font-size: 12px; margin-top: 5px; line-height: 1.4; min-height: 2.8em; text-align: center; width: 100%;">ギンガム<br>チェック</p>
+                </div>
+                <div style="width: 100px; display: flex; flex-direction: column; align-items: center;">
+                    <img src="./assets/images/pattern_houndstooth.png" alt="ハウンドトゥース（千鳥格子）" style="width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                    <p style="font-size: 12px; margin-top: 5px; line-height: 1.4; min-height: 2.8em; text-align: center; width: 100%;">ハウンドトゥース<br>（千鳥格子）</p>
+                </div>
+                <div style="width: 100px; display: flex; flex-direction: column; align-items: center;">
+                    <img src="./assets/images/pattern_argyle.png" alt="アーガイル" style="width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                    <p style="font-size: 12px; margin-top: 5px; line-height: 1.4; min-height: 2.8em; text-align: center; width: 100%;">アーガイル</p>
+                </div>
+                <div style="width: 100px; display: flex; flex-direction: column; align-items: center;">
+                    <img src="./assets/images/pattern_tartan.png" alt="タータンチェック" style="width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                    <p style="font-size: 12px; margin-top: 5px; line-height: 1.4; min-height: 2.8em; text-align: center; width: 100%;">タータン<br>チェック</p>
+                </div>
+                <div style="width: 100px; display: flex; flex-direction: column; align-items: center;">
+                    <img src="./assets/images/pattern_madras.png" alt="マドラスチェック" style="width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                    <p style="font-size: 12px; margin-top: 5px; line-height: 1.4; min-height: 2.8em; text-align: center; width: 100%;">マドラス<br>チェック</p>
+                </div>
+                
+            </div>
+
+            <li style="margin-top: 15px;"><strong>便利な機能の活用：</strong><br>
+                ・<strong>画像のズーム・回転：</strong> 画像はアップ（拡大）して細部を確認できます。また、「Shiftキー」を押しながら操作することで、画像を回転させることも可能です。<br>
+                ・<strong>固定（ロック）ボタン：</strong> 画像の横にあるボタンを押すと、気に入った「色」「形」「柄」を固定したまま次世代を生成できます。<br>
+                ・<strong>全個体表示：</strong> 「全20個体を表示」ボタンを押すと、裏で生成された他のデザインを確認でき、ドラッグ＆ドロップで別の親として指名することも可能です。
+            </li>
+            <li>入力や固定の設定が完了したら、右の「決定」ボタンをクリックしてください。</li>
+            <li>しばらく待つと、次世代の画像と新しい入力欄が出現します。この流れを何回か繰り返してみましょう。</li>
+            <li>
+                なにかが閃いたら、書き留めてみましょう。<br>
+                図形をﾈｺﾁｬﾝに置き換えたり、配置を調整してみたり、...あなた次第でいくらでも化けます。
+            </li>
+        </ol>
+        <p>この画面は、右上の「使い方」ボタンでいつでも切り替えることができます。</p>
+        <img src="./assets/images/menu_manual.png" alt="ヘッダーメニュー">
+        <h3>おまけ機能</h3>
+        <ul>
+            <li>「テーマ」：ライトテーマとダークテーマを切り替えることができます。</li>
+        </ul>
+        <hr>
+        <p>最終更新：2024 Dec.8</p>
+    </div>
+    <!-----------------------------
+    #MARK: 評価実験
+    ------------------------------>
+    <div id="estimation" hidden>
+        <!-- ★ Netlify Form に対応させるため data-netlify="true" を追加 -->
+        <form name="estimationForm" method="post" id="estimationForm" data-netlify="true">
+            <!-- ★ JSから操作ログを格納して送信するための隠しフィールド -->
+            <input type="hidden" name="system_log" id="system_log" value="">
+            
+            <input type="checkbox" id="form_exp" hidden checked>
+            <input type="checkbox" id="fullsize" hidden>
+            <label class="form-head" for="form_exp">
+                <h3>評価実験にご協力をお願いいたします</h3>
+                <span>△</span>
+            </label>
+            <p class="fullsize-wrapper form-inner">
+                <label for="fullsize"><u>分割表示の切替</u></label>
+            </p>
+            <ul class="form-inner">
+                <li>当アンケートで得た回答は当研究のみに使用します。</li>
+                <li>個人情報が含まれる内容は、論文や研究発表の際には匿名化いたします。</li>
+                <li>送信していただく内容は、以下のアンケートの回答の他に、当システムが出力した画像および入力された評価内容を含みます。</li>
+                <li>テキストの文字数制限は、各回答おおよそ1000文字となっております。</li>
+            </ul>
+            <dl>
+                <dt>参加者名（任意）</dt>
+                <dd><input type="text" name="student_name" class="w2x" placeholder="なまえ"></dd>
+                <dt class="required">参加者ID（または学籍番号）</dt>
+                <dd>
+                    <input type="number" name="student_num" id="student_num" value="" placeholder="例: 001" required>
+                </dd>
+
+                <!-- ★ 改善案を引き出す自由記述中心の質問にアップデート -->
+                <dt class="required">質問 1：最初のテキスト入力で生成された「初期画像」について、イメージとのズレを感じた点や、より精度を上げるための改善案があれば教えてください。</dt>
+                <dd><textarea name="q01" placeholder="例：「〇〇」と入力したが△△な色合いになった、など" required></textarea></dd>
+
+                <dt class="required">質問 2：入力した評価が「意図通りに反映されなかった」と感じた際、システムにどう解釈（または反応）してほしかったですか？</dt>
+                <dd><textarea name="q02" placeholder="例：「〇〇」と入力したのに△△になった。本当は□□になってほしかった、など" required></textarea></dd>
+
+                <dt class="required">質問 3：追加された「柄（ストライプ、チェック等）」の指定について、さらに表現の幅を広げるための改善案や、追加してほしい柄があれば教えてください。</dt>
+                <dd><textarea name="q03" placeholder="役立った点や、もっと欲しい柄、使いにくかった点など" required></textarea></dd>
+
+                <dt class="required">質問 4：ドラッグ＆ドロップでの親指名や「ロック機能」について、操作しづらかった点や「こうなればもっと使いやすい」という改善案を教えてください。</dt>
+                <dd><textarea name="q04" placeholder="例：どこにドロップすればいいか分かりにくかった、ロックの解除が面倒だった、など" required></textarea></dd>
+
+                <dt class="required">質問 5：システム全体を通して、操作に迷った点やストレスを感じた部分、または「こんな機能が追加されたら嬉しい」という要望を教えてください。</dt>
+                <dd><textarea name="q05" placeholder="UIの配置、レスポンスの速度、エラーの分かりにくさなど、どんな些細なことでも構いません" required></textarea></dd>
+
+                <dt id="validate-wrapper">
+                    <!-- ★ Netlifyへの自動送信をトリガーするボタン（IDはvalidate） -->
+                    <button id="validate" type="button" style="padding: 15px 30px; font-weight: bold; background: #0056b3; color: #fff; border-radius: 5px; cursor: pointer;">アンケートとログを送信して終了する</button>
+                </dt>
+            </dl>
+        </form>
+    </div>
+</body>
+<script src="./script/themes.js"></script>
+<script src="./script/kuromoji.js"></script>
+<script type="module" src="./script/main.js"></script>
+</html>
