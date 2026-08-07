@@ -10,7 +10,7 @@ import { loadModel, preloadDictVectors } from "./_similarity.js";
 export const dics = new Object();
 export const evaluateRules = [];
 
-// ★ ここを false に変更して、エラーの原因になっていた古いプログラムをオフにします
+// ★ 古いプログラムをオフにする設定
 const isAvailableEstimation = false;
 
 // ★ 実験ログ（入力履歴）を貯めておくための配列を追加
@@ -579,10 +579,10 @@ function fixChromString(value) {
 }
 
 // ==========================================
-// 評価実験用のデータ回収プログラム（Netlify自動送信）
+// 評価実験用のデータ回収プログラム（Googleフォーム直結版）
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
-    // ★ 学籍番号のスライダー連動機能（もしスライダーを復活させた時のための備え）
+    // 学籍番号のスライダー連動機能
     const numInput = document.getElementById('student_num');
     const rangeInput = document.getElementById('student_num_range');
     if (numInput && rangeInput) {
@@ -595,20 +595,13 @@ window.addEventListener('DOMContentLoaded', () => {
         validateBtn.addEventListener('click', function(e) {
             const form = document.getElementById('estimationForm');
             
-            // ★ 空欄がないかチェック（必須項目の確認）
+            // 空欄がないかチェック（必須項目の確認）
             if (!form.checkValidity()) {
                 form.reportValidity(); // 「このフィールドを入力してください」という警告を出す
                 return; // エラーがあれば送信をストップ
             }
 
-            e.preventDefault(); // デフォルトの送信（画面遷移）をストップ
-            
-            // ① 送信ボタンを連打できないように「送信中...」にする
-            const originalText = validateBtn.textContent;
-            validateBtn.textContent = "送信中...";
-            validateBtn.disabled = true;
-
-            // ② 貯めていた操作ログを、HTMLの見えない入力欄にセットする
+            // 貯めていた操作ログを、HTMLの見えない入力欄（system_log）にセットする
             const logInput = document.getElementById('system_log');
             if (logInput) {
                 if (window.experimentLogs && window.experimentLogs.length > 0) {
@@ -618,24 +611,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // ③ フォームのデータを全て取得
-            const formData = new FormData(form);
-
-            // ④ Netlifyに向けて裏で送信（fetch）
-            fetch('/', {
-                method: 'POST',
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams(formData).toString()
-            })
-            .then(() => {
-                alert("送信が完了しました！ご協力ありがとうございました。");
-                validateBtn.textContent = "送信完了";
-            })
-            .catch((error) => {
-                alert("送信に失敗しました。時間をおいて再度お試しください。");
-                validateBtn.textContent = originalText;
-                validateBtn.disabled = false;
-            });
+            // e.preventDefault() を呼ばないことで、HTMLの標準機能により
+            // フォームの内容がGoogleフォーム（/formResponse）へ直接送信され、別タブで完了画面が開きます。
         });
     }
 });
