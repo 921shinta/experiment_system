@@ -105,7 +105,7 @@
             <li>入力や固定の設定が完了したら、右の「決定」ボタンをクリックしてください。</li>
             <li>しばらく待つと、次世代の画像と新しい入力欄が出現します。この流れを何回か繰り返してみましょう。</li>
         </ol>
-        <p>この画面は、右上の「使い方」ボタンでいつでも切り替えることができます。</p>
+        <p>This screen can be toggled at any time using the "Manual" button in the upper right.</p>
         <img src="./assets/images/menu_manual.png" alt="ヘッダーメニュー">
         <h3>おまけ機能</h3>
         <ul>
@@ -118,9 +118,8 @@
     #MARK: 評価実験
     ------------------------------>
     <div id="estimation" hidden>
-        <form name="estimationForm" method="POST" data-netlify="true" id="estimationForm">
-            <input type="hidden" name="form-name" value="estimationForm">
-            <input type="hidden" name="system_log" id="system_log" value="">
+        <!-- ★ 送信先をGoogleフォームに変更し、別タブで開く設定にしています -->
+        <form action="https://docs.google.com/forms/u/0/d/1uwqCXMpfk2AhFwPooCV1eWQ7UeMDTzkPqB_rR6ESFtk/formResponse" method="POST" id="estimationForm" target="_blank">
             
             <input type="checkbox" id="form_exp" hidden checked>
             <input type="checkbox" id="fullsize" hidden>
@@ -139,58 +138,62 @@
             </ul>
             <dl>
                 <dt>参加者名（任意）</dt>
-                <dd><input type="text" name="student_name" class="w2x" placeholder="なまえ"></dd>
+                <dd><input type="text" name="entry.1673341746" class="w2x" placeholder="なまえ"></dd>
                 <dt class="required">参加者ID（または学籍番号）</dt>
                 <dd>
-                    <input type="number" name="student_num" id="student_num" value="" placeholder="例: 001" required>
+                    <input type="text" name="entry.1349288467" id="student_num" value="" placeholder="例: 001" required>
                 </dd>
 
                 <!-- 質問 1：初期画像のテキスト入力について -->
                 <dt class="required">質問 1：最初のテキスト入力で生成された「初期画像」について、イメージとのズレを感じた点や、より精度を上げるための改善案があれば教えてください。</dt>
-                <dd><textarea name="q01" placeholder="例：「〇〇」と入力したが△△な色合いになった、など" required></textarea></dd>
+                <dd><textarea name="entry.968332463" placeholder="例：「〇〇」と入力したが△△な色合いになった、など" required></textarea></dd>
 
                 <!-- 質問 2：評価文の反映度（5段階 ＋ 自由記述） -->
                 <dt class="required">質問 2-1：入力した評価は、ご自身の意図通りにどれくらい反映されたと感じましたか？（5段階評価）</dt>
                 <dd>
-                    <label style="margin-right: 15px;"><input type="radio" name="q02_rating" value="5" required> 5. 非常に反映された</label>
-                    <label style="margin-right: 15px;"><input type="radio" name="q02_rating" value="4"> 4. やや反映された</label>
-                    <label style="margin-right: 15px;"><input type="radio" name="q02_rating" value="3"> 3. どちらとも言えない</label>
-                    <label style="margin-right: 15px;"><input type="radio" name="q02_rating" value="2"> 2. あまり反映されなかった</label>
-                    <label><input type="radio" name="q02_rating" value="1"> 1. 全く反映されなかった</label>
+                    <label style="margin-right: 15px;"><input type="radio" name="entry.1075861342" value="5. 非常に反映された" required> 5. 非常に反映された</label>
+                    <label style="margin-right: 15px;"><input type="radio" name="entry.1075861342" value="4. やや反映された"> 4. やや反映された</label>
+                    <label style="margin-right: 15px;"><input type="radio" name="entry.1075861342" value="3. どちらとも言えない"> 3. どちらとも言えない</label>
+                    <label style="margin-right: 15px;"><input type="radio" name="entry.1075861342" value="2. あまり反映されなかった"> 2. あまり反映されなかった</label>
+                    <label><input type="radio" name="entry.1075861342" value="1. 全く反映されなかった"> 1. 全く反映されなかった</label>
                 </dd>
 
                 <dt class="required">質問 2-2：上記の中で、「意図通りに反映された」と感じた評価文を教えてください。</dt>
-                <dd><textarea name="q02_positive" placeholder="例：「青くして」と入力したらきれいに青い背景になった、など" required></textarea></dd>
+                <dd><textarea name="entry.1493283689" placeholder="例：「青くして」と入力したらきれいに青い背景になった、など" required></textarea></dd>
 
                 <dt class="required">質問 2-3：逆に、「あまり反映されなかった（伝わらなかった）」と感じた評価文と、システムにどう解釈してほしかったか教えてください。</dt>
-                <dd><textarea name="q02_negative" placeholder="例：「もっとクールに」と入力したが意図と違う色になった。本当は寒色系の落ち着いたデザインになってほしかった、など" required></textarea></dd>
+                <dd><textarea name="entry.398854297" placeholder="例：「もっとクールに」と入力したが意図と違う色になった。本当は寒色系の落ち着いたデザインになってほしかった、など" required></textarea></dd>
 
-                <!-- 質問 3：柄・表現の追加要望 -->　　
+                <!-- 質問 3：柄・表現の追加要望 -->    
                 <dt class="required">質問 3：追加してほしい「柄」や「表現」があれば自由に教えてください。</dt>
-                <dd><textarea name="q03" placeholder="例：ドットの種類を増やしてほしい、波模様が欲しい、など" required></textarea></dd>
+                <dd><textarea name="entry.855488395" placeholder="例：ドットの種類を増やしてほしい、波模様が欲しい、など" required></textarea></dd>
 
                 <!-- 質問 4：機能の使用有無 ＆ 操作性 -->
                 <dt class="required">質問 4-1：ドラッグ＆ドロップによる親選択や「ロック機能」を使用しましたか？</dt>
                 <dd>
-                    <label style="margin-right: 15px;"><input type="radio" name="q04_usage" value="両方使った" required> 両方使った</label>
-                    <label style="margin-right: 15px;"><input type="radio" name="q04_usage" value="ドラッグ＆ドロップだけ使った"> ドラッグ＆ドロップだけ使った</label>
-                    <label style="margin-right: 15px;"><input type="radio" name="q04_usage" value="ロック機能だけ使った"> ロック機能だけ使った</label>
-                    <label><input type="radio" name="q04_usage" value="あまり使わなかった"> あまり使わなかった</label>
+                    <label style="margin-right: 15px;"><input type="radio" name="entry.1607087465" value="両方使った" required> 両方使った</label>
+                    <label style="margin-right: 15px;"><input type="radio" name="entry.1607087465" value="ドラッグ＆ドロップだけ使った"> ドラッグ＆ドロップだけ使った</label>
+                    <label style="margin-right: 15px;"><input type="radio" name="entry.1607087465" value="ロック機能だけ使った"> ロック機能だけ使った</label>
+                    <label><input type="radio" name="entry.1607087465" value="あまり使わなかった"> あまり使わなかった</label>
                 </dd>
 
                 <dt class="required">質問 4-2：上記の機能を含め、操作していて「使いにくかった点」や「改善してほしい点」があれば教えてください。</dt>
-                <dd><textarea name="q04_feedback" placeholder="" required></textarea></dd>
+                <dd><textarea name="entry.407429127" placeholder="" required></textarea></dd>
 
                 <!-- 質問 5：追加してほしい機能 -->
                 <dt class="required">質問 5：システムに「追加してほしい機能」があれば教えてください。</dt>
-                <dd><textarea name="q05" placeholder="" required></textarea></dd>
+                <dd><textarea name="entry.1867417803" placeholder="" required></textarea></dd>
 
                 <!-- 質問 6：自由意見 -->
                 <dt>質問 6：その他、システムに関する自由意見・感想があればご記入ください。</dt>
-                <dd><textarea name="q06" placeholder="どんな些細なことでも構いません"></textarea></dd>
+                <dd><textarea name="entry.1332154141" placeholder="どんな些細なことでも構いません"></textarea></dd>
+
+                <!-- システムログ用の隠しフィールド -->
+                <input type="hidden" name="entry.309675384" id="system_log" value="">
 
                 <dt id="validate-wrapper">
-                    <button id="validate" type="button" style="padding: 15px 30px; font-weight: bold; background: #0056b3; color: #fff; border-radius: 5px; cursor: pointer;">アンケートとログを送信して終了する</button>
+                    <!-- 送信ボタンを type="submit" に変更してGoogleフォームへ飛ばします -->
+                    <button id="validate" type="submit" style="padding: 15px 30px; font-weight: bold; background: #0056b3; color: #fff; border-radius: 5px; cursor: pointer;">アンケートとログを送信して終了する</button>
                 </dt>
             </dl>
         </form>
