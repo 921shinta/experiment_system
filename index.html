@@ -118,8 +118,8 @@
     #MARK: 評価実験
     ------------------------------>
     <div id="estimation" hidden>
-        <!-- ★ 送信先をGoogleフォームに変更し、別タブで開く設定にしています -->
-        <form action="https://docs.google.com/forms/u/0/d/1uwqCXMpfk2AhFwPooCV1eWQ7UeMDTzkPqB_rR6ESFtk/formResponse" method="POST" id="estimationForm" target="_blank">
+        <!-- 正しい送信先 URL (末尾を /formResponse に変更) -->
+        <form action="https://docs.google.com/forms/d/e/1FAIpQLSc9EWzCNwdZjVNw52V-dEEHOq4RSy87bZCjgA9rUC2rztGvsw/formResponse" method="POST" id="estimationForm" target="_blank">
             
             <input type="checkbox" id="form_exp" hidden checked>
             <input type="checkbox" id="fullsize" hidden>
@@ -139,16 +139,17 @@
             <dl>
                 <dt>参加者名（任意）</dt>
                 <dd><input type="text" name="entry.1673341746" class="w2x" placeholder="なまえ"></dd>
+                
                 <dt class="required">参加者ID（または学籍番号）</dt>
                 <dd>
                     <input type="text" name="entry.1349288467" id="student_num" value="" placeholder="例: 001" required>
                 </dd>
 
-                <!-- 質問 1：初期画像のテキスト入力について -->
+                <!-- 質問 1 -->
                 <dt class="required">質問 1：最初のテキスト入力で生成された「初期画像」について、イメージとのズレを感じた点や、より精度を上げるための改善案があれば教えてください。</dt>
                 <dd><textarea name="entry.968332463" placeholder="例：「〇〇」と入力したが△△な色合いになった、など" required></textarea></dd>
 
-                <!-- 質問 2：評価文の反映度（5段階 ＋ 自由記述） -->
+                <!-- 質問 2-1（5段階評価） -->
                 <dt class="required">質問 2-1：入力した評価は、ご自身の意図通りにどれくらい反映されたと感じましたか？（5段階評価）</dt>
                 <dd>
                     <label style="margin-right: 15px;"><input type="radio" name="entry.1075861342" value="5. 非常に反映された" required> 5. 非常に反映された</label>
@@ -158,17 +159,19 @@
                     <label><input type="radio" name="entry.1075861342" value="1. 全く反映されなかった"> 1. 全く反映されなかった</label>
                 </dd>
 
+                <!-- 質問 2-2 -->
                 <dt class="required">質問 2-2：上記の中で、「意図通りに反映された」と感じた評価文を教えてください。</dt>
                 <dd><textarea name="entry.1493283689" placeholder="例：「青くして」と入力したらきれいに青い背景になった、など" required></textarea></dd>
 
+                <!-- 質問 2-3 -->
                 <dt class="required">質問 2-3：逆に、「あまり反映されなかった（伝わらなかった）」と感じた評価文と、システムにどう解釈してほしかったか教えてください。</dt>
                 <dd><textarea name="entry.398854297" placeholder="例：「もっとクールに」と入力したが意図と違う色になった。本当は寒色系の落ち着いたデザインになってほしかった、など" required></textarea></dd>
 
-                <!-- 質問 3：柄・表現の追加要望 -->    
+                <!-- 質問 3 -->
                 <dt class="required">質問 3：追加してほしい「柄」や「表現」があれば自由に教えてください。</dt>
                 <dd><textarea name="entry.855488395" placeholder="例：ドットの種類を増やしてほしい、波模様が欲しい、など" required></textarea></dd>
 
-                <!-- 質問 4：機能の使用有無 ＆ 操作性 -->
+                <!-- 質問 4-1 -->
                 <dt class="required">質問 4-1：ドラッグ＆ドロップによる親選択や「ロック機能」を使用しましたか？</dt>
                 <dd>
                     <label style="margin-right: 15px;"><input type="radio" name="entry.1607087465" value="両方使った" required> 両方使った</label>
@@ -177,22 +180,22 @@
                     <label><input type="radio" name="entry.1607087465" value="あまり使わなかった"> あまり使わなかった</label>
                 </dd>
 
+                <!-- 質問 4-2 -->
                 <dt class="required">質問 4-2：上記の機能を含め、操作していて「使いにくかった点」や「改善してほしい点」があれば教えてください。</dt>
                 <dd><textarea name="entry.407429127" placeholder="" required></textarea></dd>
 
-                <!-- 質問 5：追加してほしい機能 -->
+                <!-- 質問 5 -->
                 <dt class="required">質問 5：システムに「追加してほしい機能」があれば教えてください。</dt>
                 <dd><textarea name="entry.1867417803" placeholder="" required></textarea></dd>
 
-                <!-- 質問 6：自由意見 -->
+                <!-- 質問 6 -->
                 <dt>質問 6：その他、システムに関する自由意見・感想があればご記入ください。</dt>
                 <dd><textarea name="entry.1332154141" placeholder="どんな些細なことでも構いません"></textarea></dd>
 
-                <!-- システムログ用の隠しフィールド -->
+                <!-- システムログ -->
                 <input type="hidden" name="entry.309675384" id="system_log" value="">
 
                 <dt id="validate-wrapper">
-                    <!-- 送信ボタンを type="submit" に変更してGoogleフォームへ飛ばします -->
                     <button id="validate" type="submit" style="padding: 15px 30px; font-weight: bold; background: #0056b3; color: #fff; border-radius: 5px; cursor: pointer;">アンケートとログを送信して終了する</button>
                 </dt>
             </dl>
