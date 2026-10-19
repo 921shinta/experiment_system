@@ -18,6 +18,9 @@
             対話型 背景画像生成システム
         </div>
         <div class="header-control">
+            <!-- 戻るボタン（最初は非表示） -->
+            <button id="btn-undo" style="background: #dc3545; color: #fff; font-weight: bold; display: none;">1つ前に戻る</button>
+            
             <button onclick="document.getElementById('estimation').removeAttribute('hidden'); window.scrollTo(0, document.body.scrollHeight);" style="background: #0056b3; color: #fff; font-weight: bold;">評価実験</button>
             <button id="toggleTheme">テーマ</button>
             <button id="toggleManual">使い方</button>
@@ -75,6 +78,10 @@
                     <p style="font-size: 12px; margin-top: 5px; line-height: 1.4; min-height: 2.8em; text-align: center; width: 100%;">ドット</p>
                 </div>
                 <div style="width: 100px; display: flex; flex-direction: column; align-items: center;">
+                    <img src="./assets/images/pattern_showerdot.png" alt="シャワードット" style="width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                    <p style="font-size: 12px; margin-top: 5px; line-height: 1.4; min-height: 2.8em; text-align: center; width: 100%;">シャワードット</p>
+                </div>
+                <div style="width: 100px; display: flex; flex-direction: column; align-items: center;">
                     <img src="./assets/images/pattern_gingham.png" alt="ギンガムチェック" style="width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
                     <p style="font-size: 12px; margin-top: 5px; line-height: 1.4; min-height: 2.8em; text-align: center; width: 100%;">ギンガム<br>チェック</p>
                 </div>
@@ -94,6 +101,18 @@
                     <img src="./assets/images/pattern_madras.png" alt="マドラスチェック" style="width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
                     <p style="font-size: 12px; margin-top: 5px; line-height: 1.4; min-height: 2.8em; text-align: center; width: 100%;">マドラス<br>チェック</p>
                 </div>
+                <div style="width: 100px; display: flex; flex-direction: column; align-items: center;">
+                    <img src="./assets/images/pattern_clusterstripe.png" alt="クラスターストライプ" style="width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                    <p style="font-size: 12px; margin-top: 5px; line-height: 1.4; min-height: 2.8em; text-align: center; width: 100%;">クラスター<br>ストライプ</p>
+                </div>
+                <div style="width: 100px; display: flex; flex-direction: column; align-items: center;">
+                    <img src="./assets/images/pattern_clubstripe.png" alt="クラブストライプ" style="width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                    <p style="font-size: 12px; margin-top: 5px; line-height: 1.4; min-height: 2.8em; text-align: center; width: 100%;">クラブ<br>ストライプ</p>
+                </div>
+                <div style="width: 100px; display: flex; flex-direction: column; align-items: center;">
+                    <img src="./assets/images/pattern_multistripe.png" alt="マルチストライプ" style="width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                    <p style="font-size: 12px; margin-top: 5px; line-height: 1.4; min-height: 2.8em; text-align: center; width: 100%;">マルチ<br>ストライプ</p>
+                </div>
                 
             </div>
 
@@ -103,23 +122,34 @@
                 ・<strong>全個体表示：</strong> 「全20個体を表示」ボタンを押すと、裏で生成された他のデザインを確認でき、ドラッグ＆ドロップで別の親として指名することも可能です。
             </li>
             <li>入力や固定の設定が完了したら、右の「決定」ボタンをクリックしてください。</li>
+            <li>初期状態で入力欄に何も入力せずに「この内容で生成」ボタンを押すと、ランダムな画像が生成・表示されます。</li>
             <li>しばらく待つと、次世代の画像と新しい入力欄が出現します。この流れを何回か繰り返してみましょう。</li>
         </ol>
-        <p>This screen can be toggled at any time using the "Manual" button in the upper right.</p>
+        <p>この画面は、右上の「使い方」ボタンでいつでも切り替えることができます。</p>
         <img src="./assets/images/menu_manual.png" alt="ヘッダーメニュー">
         <h3>おまけ機能</h3>
         <ul>
             <li>「テーマ」：ライトテーマとダークテーマを切り替えることができます。</li>
         </ul>
         <hr>
+<!-- ★ 修正: クリックできない問題を強制的に解消した確実なボタン -->
+        <div style="text-align: center; margin: 50px 0; padding-bottom: 50px; position: relative; z-index: 9999;">
+            <button onclick="document.getElementById('manualPopup').classList.add('hidden');" style="display: inline-block; padding: 20px 40px; font-size: 20px; font-weight: bold; background-color: #008cff; color: #fff; border: none; border-radius: 8px; cursor: pointer; pointer-events: auto;">
+                使い方を閉じて生成を始める
+            </button>
+        </div>
+
         <p>最終更新：2024 Dec.8</p>
+
+        
+
     </div>
     <!-----------------------------
     #MARK: 評価実験
     ------------------------------>
     <div id="estimation" hidden>
-        <!-- 正しい送信先 URL (末尾を /formResponse に変更) -->
-        <form action="https://docs.google.com/forms/d/e/1FAIpQLSc9EWzCNwdZjVNw52V-dEEHOq4RSy87bZCjgA9rUC2rztGvsw/formResponse" method="POST" id="estimationForm" target="_blank">
+        <!-- 送信先 URL (末尾を /formResponse に変更) -->
+        <form action="https://docs.google.com/forms/d/e/1FAIpQLScztL02qv7em_fCqLFMkzjOSK2eVdQDNx4c22mPExyuiYBU6Q/formResponse" method="POST" id="estimationForm" target="_blank">
             
             <input type="checkbox" id="form_exp" hidden checked>
             <input type="checkbox" id="fullsize" hidden>
@@ -137,63 +167,80 @@
                 <li>テキストの文字数制限は、各回答おおよそ1000文字となっております。</li>
             </ul>
             <dl>
-                <dt>参加者名（任意）</dt>
-                <dd><input type="text" name="entry.1673341746" class="w2x" placeholder="なまえ"></dd>
-                
                 <dt class="required">参加者ID（または学籍番号）</dt>
                 <dd>
-                    <input type="text" name="entry.1349288467" id="student_num" value="" placeholder="例: 001" required>
+                    <input type="text" data-key="participantId" id="student_num" value="" placeholder="例: 001" required>
                 </dd>
 
-                <!-- 質問 1 -->
-                <dt class="required">質問 1：最初のテキスト入力で生成された「初期画像」について、イメージとのズレを感じた点や、より精度を上げるための改善案があれば教えてください。</dt>
-                <dd><textarea name="entry.968332463" placeholder="例：「〇〇」と入力したが△△な色合いになった、など" required></textarea></dd>
-
-                <!-- 質問 2-1（5段階評価） -->
-                <dt class="required">質問 2-1：入力した評価は、ご自身の意図通りにどれくらい反映されたと感じましたか？（5段階評価）</dt>
+                <!-- 1 反映度 -->
+                <dt class="required">あなたが入力した評価は、最終的にどれくらい反映されましたか</dt>
                 <dd>
-                    <label style="margin-right: 15px;"><input type="radio" name="entry.1075861342" value="5. 非常に反映された" required> 5. 非常に反映された</label>
-                    <label style="margin-right: 15px;"><input type="radio" name="entry.1075861342" value="4. やや反映された"> 4. やや反映された</label>
-                    <label style="margin-right: 15px;"><input type="radio" name="entry.1075861342" value="3. どちらとも言えない"> 3. どちらとも言えない</label>
-                    <label style="margin-right: 15px;"><input type="radio" name="entry.1075861342" value="2. あまり反映されなかった"> 2. あまり反映されなかった</label>
-                    <label><input type="radio" name="entry.1075861342" value="1. 全く反映されなかった"> 1. 全く反映されなかった</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="reflect" value="5. 非常に反映された" required> 5. 非常に反映された</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="reflect" value="4. やや反映された"> 4. やや反映された</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="reflect" value="3. どちらとも言えない"> 3. どちらとも言えない</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="reflect" value="2. あまり反映されなかった"> 2. あまり反映されなかった</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="reflect" value="1. 全く反映されなかった"> 1. 全く反映されなかった</label>
                 </dd>
 
-                <!-- 質問 2-2 -->
-                <dt class="required">質問 2-2：上記の中で、「意図通りに反映された」と感じた評価文を教えてください。</dt>
-                <dd><textarea name="entry.1493283689" placeholder="例：「青くして」と入力したらきれいに青い背景になった、など" required></textarea></dd>
+                <!-- 2 反映された評価文 -->
+                <dt>特に反映されたと思う評価文を教えてください</dt>
+                <dd><textarea data-key="reflectedText" placeholder="例：「青くして」と入力したらきれいに青い背景になった、など"></textarea></dd>
 
-                <!-- 質問 2-3 -->
-                <dt class="required">質問 2-3：逆に、「あまり反映されなかった（伝わらなかった）」と感じた評価文と、システムにどう解釈してほしかったか教えてください。</dt>
-                <dd><textarea name="entry.398854297" placeholder="例：「もっとクールに」と入力したが意図と違う色になった。本当は寒色系の落ち着いたデザインになってほしかった、など" required></textarea></dd>
+                <!-- 3 反映されなかった評価文 -->
+                <dt>まったく反映されなかったと思う評価文を教えてください</dt>
+                <dd><textarea data-key="notReflectedText" placeholder="例：「もっとクールに」と入力したが意図と違う色になった、など"></textarea></dd>
 
-                <!-- 質問 3 -->
-                <dt class="required">質問 3：追加してほしい「柄」や「表現」があれば自由に教えてください。</dt>
-                <dd><textarea name="entry.855488395" placeholder="例：ドットの種類を増やしてほしい、波模様が欲しい、など" required></textarea></dd>
-
-                <!-- 質問 4-1 -->
-                <dt class="required">質問 4-1：ドラッグ＆ドロップによる親選択や「ロック機能」を使用しましたか？</dt>
+                <!-- 4 満足度 -->
+                <dt class="required">最終的な画像に満足していますか</dt>
                 <dd>
-                    <label style="margin-right: 15px;"><input type="radio" name="entry.1607087465" value="両方使った" required> 両方使った</label>
-                    <label style="margin-right: 15px;"><input type="radio" name="entry.1607087465" value="ドラッグ＆ドロップだけ使った"> ドラッグ＆ドロップだけ使った</label>
-                    <label style="margin-right: 15px;"><input type="radio" name="entry.1607087465" value="ロック機能だけ使った"> ロック機能だけ使った</label>
-                    <label><input type="radio" name="entry.1607087465" value="あまり使わなかった"> あまり使わなかった</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="satisfaction" value="5. 非常に満足" required> 5. 非常に満足</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="satisfaction" value="4. やや満足"> 4. やや満足</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="satisfaction" value="3. どちらとも言えない"> 3. どちらとも言えない</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="satisfaction" value="2. あまり満足ではない"> 2. あまり満足ではない</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="satisfaction" value="1. 全く満足ではない"> 1. 全く満足ではない</label>
                 </dd>
 
-                <!-- 質問 4-2 -->
-                <dt class="required">質問 4-2：上記の機能を含め、操作していて「使いにくかった点」や「改善してほしい点」があれば教えてください。</dt>
-                <dd><textarea name="entry.407429127" placeholder="" required></textarea></dd>
+                <!-- 5 色・図形の具体的な指定 -->
+                <dt class="required">色や図形をはっきり指定した指示(例: 「青にして」「丸を使って」)は反映されましたか</dt>
+                <dd>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="colorShape" value="5. 非常に反映された" required> 5. 非常に反映された</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="colorShape" value="4. やや反映された"> 4. やや反映された</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="colorShape" value="3. どちらとも言えない"> 3. どちらとも言えない</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="colorShape" value="2. あまり反映されなかった"> 2. あまり反映されなかった</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="colorShape" value="1. 全く反映されなかった"> 1. 全く反映されなかった</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="colorShape" value="そのような指示はしなかった"> そのような指示はしなかった</label>
+                </dd>
 
-                <!-- 質問 5 -->
-                <dt class="required">質問 5：システムに「追加してほしい機能」があれば教えてください。</dt>
-                <dd><textarea name="entry.1867417803" placeholder="" required></textarea></dd>
+                <!-- 6 快適性 -->
+                <dt class="required">このシステムの動作は快適でしたか</dt>
+                <dd>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="comfort" value="5. 非常に快適" required> 5. 非常に快適</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="comfort" value="4. やや快適"> 4. やや快適</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="comfort" value="3. どちらとも言えない"> 3. どちらとも言えない</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="comfort" value="2. あまり快適ではない"> 2. あまり快適ではない</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="comfort" value="1. 全く快適ではない"> 1. 全く快適ではない</label>
+                </dd>
 
-                <!-- 質問 6 -->
-                <dt>質問 6：その他、システムに関する自由意見・感想があればご記入ください。</dt>
-                <dd><textarea name="entry.1332154141" placeholder="どんな些細なことでも構いません"></textarea></dd>
+                <!-- 7 使いやすさ -->
+                <dt class="required">このシステムは使いやすかったですか</dt>
+                <dd>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="usability" value="5. 非常に使いやすい" required> 5. 非常に使いやすい</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="usability" value="4. やや使いやすい"> 4. やや使いやすい</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="usability" value="3. どちらとも言えない"> 3. どちらとも言えない</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="usability" value="2. あまり使いやすくない"> 2. あまり使いやすくない</label>
+                    <label style="margin-right: 15px; display: inline-block;"><input type="radio" data-key="usability" value="1. 全く使いやすくない"> 1. 全く使いやすくない</label>
+                </dd>
 
-                <!-- システムログ -->
-                <input type="hidden" name="entry.309675384" id="system_log" value="">
+                <!-- 8 使いやすさの理由 -->
+                <dt>使いやすかったところ、使いにくかったところを教えてください</dt>
+                <dd><textarea data-key="usabilityText"></textarea></dd>
+
+                <!-- 9 追加してほしい機能 -->
+                <dt>このシステムに追加してほしい機能があれば教えてください</dt>
+                <dd><textarea data-key="requestText"></textarea></dd>
+
+                <!-- システムログ（main.js が #system_log に入力文・画像のログを書き込む） -->
+                <input type="hidden" data-key="systemLog" id="system_log" value="">
 
                 <dt id="validate-wrapper">
                     <button id="validate" type="submit" style="padding: 15px 30px; font-weight: bold; background: #0056b3; color: #fff; border-radius: 5px; cursor: pointer;">アンケートとログを送信して終了する</button>
@@ -202,6 +249,34 @@
         </form>
     </div>
 </body>
+<script>
+// ============================================================
+// ★ここだけ書き換える: Googleフォームの各質問の entry.数字
+//   (取得方法は README 参照。XXXX のままだと送信を止めます)
+// ============================================================
+const ENTRY = {
+    participantId:    'entry.1850622523',
+    reflect:          'entry.298132765',
+    reflectedText:    'entry.1193266304',
+    notReflectedText: 'entry.1992810340',
+    satisfaction:     'entry.1813957504',
+    colorShape:       'entry.1308875465',
+    comfort:          'entry.1184266450',
+    usability:        'entry.1591232395',
+    usabilityText:    'entry.1208894362',
+    requestText:      'entry.2105910398',
+    systemLog:        'entry.1261567953'
+};
+document.querySelectorAll('#estimationForm [data-key]').forEach(el => {
+    el.name = ENTRY[el.dataset.key];
+});
+document.getElementById('estimationForm').addEventListener('submit', e => {
+    if (Object.values(ENTRY).some(v => v.includes('XXXX'))) {
+        e.preventDefault();
+        alert('アンケートの送信先(entry.数字)が未設定です。index.html の ENTRY を設定してください。');
+    }
+});
+</script>
 <script src="./script/themes.js"></script>
 <script src="./script/kuromoji.js"></script>
 <script type="module" src="./script/main.js"></script>

@@ -16,11 +16,61 @@ const isAvailableEstimation = false;
 // ★ 実験ログ（入力履歴）を貯めておくための配列を追加
 window.experimentLogs = [];
 
+// ★ 戻る機能のための状態保存用履歴を追加
+window.generationHistory = [];
+
+// ★ ドラッグ中かどうかを判定するフラグ（光る演出用）
+window.isDragging = false; 
+
 // #MARK: 初期処理
 window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('toggleManual').addEventListener('click', () => {
         document.getElementById('manualPopup').classList.toggle('hidden');
     });
+
+    // ★ 戻る（アンドゥ）ボタンの処理
+    const undoBtn = document.getElementById('btn-undo');
+    if (undoBtn) {
+        undoBtn.addEventListener('click', () => {
+            if (window.generationHistory.length === 0) return;
+
+            // 履歴から一つ前の状態を取り出す
+            const prevState = window.generationHistory.pop();
+
+            // 1. 最新の世代のDOM（画面）を完全に削除する
+            const mainElem = document.querySelector('main');
+            if (mainElem && mainElem.lastElementChild) { 
+                mainElem.removeChild(mainElem.lastElementChild);
+            }
+
+            // 2. 評価ルールを前の状態に復元する
+            evaluateRules.length = 0;
+            evaluateRules.push(...prevState.evaluateRulesBackup);
+
+            // 3. population（個体群データや世代数）を、ミューテーション（変化）前の状態に完全復元する
+            Object.keys(prevState.populationRef).forEach(key => delete prevState.populationRef[key]);
+            Object.assign(prevState.populationRef, prevState.populationBackup);
+
+            // 4. 前の世代の入力欄と決定ボタンを再び有効化する
+            const prevGenIndex = prevState.populationBackup.index;
+            const evalBtn = document.getElementById(`btn-evaluate_${prevGenIndex}`);
+            const evalArea = document.getElementById(`area-userEvaluate_${prevGenIndex}`);
+            
+            if(evalBtn) evalBtn.removeAttribute('disabled');
+            if(evalArea) evalArea.removeAttribute('disabled');
+            
+            const msgEval = document.getElementById(`msg-userEvaluate_${prevGenIndex}`);
+            if(msgEval) msgEval.style.display = 'none';
+
+            // 5. ログに「戻った」ことを記録する
+            window.experimentLogs.push(`--- [操作] 世代: ${prevGenIndex} に戻り、やり直しました ---`);
+
+            // 履歴が空になったら戻るボタンを隠す
+            if (window.generationHistory.length === 0) {
+                undoBtn.style.display = 'none';
+            }
+        });
+    }
 
     getTables().then(async (data) => {
         dics.color = data.colorDic;
@@ -55,6 +105,8 @@ function main() {
     const elemMain = document.querySelector('main');
     const initialSection = document.createElement('section');
     initialSection.classList.add('genCycle');
+    
+    // ▼ ここから書き換え ▼
     initialSection.innerHTML = `
         <div class="userEvaluate">
             <div class="titleBar">
@@ -65,8 +117,74 @@ function main() {
             </div>
             <div class="userEvaluate-inner" id="initialEvaluate-inner">
                 <textarea id="area-initialEvaluate" rows="" placeholder="例：「青いストライプ柄が欲しい」「丸と三角を使ってほしい」など。空欄のまま決定すると完全ランダムで生成します。"></textarea>
+                
+                <!-- ★ 修正：柄のサンプル「画像」が見れるように復元・強化しました！ -->
+                <details style="margin-top: 8px; font-size: 0.85em; color: #555; cursor: pointer;">
+                    <summary style="outline: none; font-weight: bold;">💡 どんな「柄」や「形」が使えるか見る（画像あり）</summary>
+                    <div style="padding: 10px; background: #fafafa; border-radius: 6px; border: 1px solid #ddd; margin-top: 5px; line-height: 1.6; cursor: text;">
+                        <b style="color:#333;">🔺 使える「形」の例：</b><br>
+                        丸(円)、三角、四角、楕円、星<br>
+                        <hr style="border:none; border-top:1px dashed #ccc; margin: 6px 0;">
+                        <b style="color:#333;">🔲 使える「柄・表現」の例：</b><br>
+                        波、唐草模様、シャワー(散りばめ)、キラキラ、ふわふわ(雲)、ネオン(発光)、エモい、レトロ など<br>
+                        
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; justify-content: center;">
+                            <div style="width: 80px; text-align: center;">
+                                <img src="./assets/images/pattern_stripe.png" alt="ストライプ" style="width: 80px; height: 80px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                                <p style="font-size: 10px; margin-top: 4px; line-height: 1.2;">ストライプ</p>
+                            </div>
+                            <div style="width: 80px; text-align: center;">
+                                <img src="./assets/images/pattern_windowpane.png" alt="ウィンドウペーン" style="width: 80px; height: 80px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                                <p style="font-size: 10px; margin-top: 4px; line-height: 1.2;">ウィンドウ<br>ペーン</p>
+                            </div>
+                            <div style="width: 80px; text-align: center;">
+                                <img src="./assets/images/pattern_dot.png" alt="ドット" style="width: 80px; height: 80px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                                <p style="font-size: 10px; margin-top: 4px; line-height: 1.2;">ドット</p>
+                            </div>
+                            <div style="width: 80px; text-align: center;">
+                                <img src="./assets/images/pattern_showerdot.png" alt="シャワードット" style="width: 80px; height: 80px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                                <p style="font-size: 10px; margin-top: 4px; line-height: 1.2;">シャワードット</p>
+                            </div>
+                            <div style="width: 80px; text-align: center;">
+                                <img src="./assets/images/pattern_gingham.png" alt="ギンガムチェック" style="width: 80px; height: 80px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                                <p style="font-size: 10px; margin-top: 4px; line-height: 1.2;">ギンガム<br>チェック</p>
+                            </div>
+                            <div style="width: 80px; text-align: center;">
+                                <img src="./assets/images/pattern_houndstooth.png" alt="千鳥格子" style="width: 80px; height: 80px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                                <p style="font-size: 10px; margin-top: 4px; line-height: 1.2;">千鳥格子</p>
+                            </div>
+                            <div style="width: 80px; text-align: center;">
+                                <img src="./assets/images/pattern_argyle.png" alt="アーガイル" style="width: 80px; height: 80px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                                <p style="font-size: 10px; margin-top: 4px; line-height: 1.2;">アーガイル</p>
+                            </div>
+                            <div style="width: 80px; text-align: center;">
+                                <img src="./assets/images/pattern_tartan.png" alt="タータンチェック" style="width: 80px; height: 80px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                                <p style="font-size: 10px; margin-top: 4px; line-height: 1.2;">タータン<br>チェック</p>
+                            </div>
+                            <div style="width: 80px; text-align: center;">
+                                <img src="./assets/images/pattern_madras.png" alt="マドラスチェック" style="width: 80px; height: 80px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                                <p style="font-size: 10px; margin-top: 4px; line-height: 1.2;">マドラス<br>チェック</p>
+                            </div>
+                            <div style="width: 80px; text-align: center;">
+                                <img src="./assets/images/pattern_clusterstripe.png" alt="ラスターストライプ" style="width: 80px; height: 80px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                                <p style="font-size: 10px; margin-top: 4px; line-height: 1.2;">クラスター<br>ストライプ</p>
+                            </div>
+                            <div style="width: 80px; text-align: center;">
+                                <img src="./assets/images/pattern_clubstripe.png" alt="クラブストライプ" style="width: 80px; height: 80px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                                <p style="font-size: 10px; margin-top: 4px; line-height: 1.2;">クラブ<br>ストライプ</p>
+                            </div>
+                            <div style="width: 80px; text-align: center;">
+                                <img src="./assets/images/pattern_multistripe.png" alt="マルチストライプ" style="width: 80px; height: 80px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; display: block;">
+                                <p style="font-size: 10px; margin-top: 4px; line-height: 1.2;">マルチ<br>ストライプ</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </details>
+
             </div>
         </div>`;
+    // ▲ ここまで書き換え ▲
     elemMain.appendChild(initialSection);
 
     let kuromojiTokenizer;
@@ -152,11 +270,15 @@ async function startGeneration(kuromojiTokenizer, initialText) {
                             e.preventDefault();
                             canvasElem.style.boxShadow = isLeftNode ? "0 0 15px 5px #ff8c00" : "0 0 15px 5px #008cff";
                         });
+                        // ★ 修正：ドラッグが乗っていない時も、ドラッグ中なら光らせたままにする
                         canvasElem.addEventListener('dragleave', () => {
-                            canvasElem.style.boxShadow = "none";
+                            canvasElem.style.boxShadow = window.isDragging ? (isLeftNode ? "0 0 0 8px rgba(255, 140, 0, 0.4)" : "0 0 0 8px rgba(0, 140, 255, 0.4)") : "none";
                         });
                         canvasElem.addEventListener('drop', (e) => {
                             e.preventDefault();
+                            window.isDragging = false; // ★ ドラッグ終了
+                            canvasElem.style.boxShadow = "none";
+
                             const draggedChromId = parseInt(e.dataTransfer.getData('text/plain'), 10);
                             if (!isNaN(draggedChromId)) {
                                 if (isLeftNode) {
@@ -206,6 +328,14 @@ function setupLockButtons(population) {
 
     const lockState = { L: { figure: false, color: false, pattern: false }, R: { figure: false, color: false, pattern: false } };
 
+    // ★ 追加：ロックボタンの初期テキストを親切な名前に強制上書き
+    ['L', 'R'].forEach(side => {
+        const btnF = document.getElementById(`btn-lockFigure_${genCount}_${side}`);
+        const btnP = document.getElementById(`btn-lockPattern_${genCount}_${side}`);
+        if (btnF && !lockState[side].figure) btnF.textContent = '🔺 図形(丸･三角など)';
+        if (btnP && !lockState[side].pattern) btnP.textContent = '🔲 模様(ドット･ストライプなど)';
+    });
+
     function removeLockRules(type) {
         for (let i = evaluateRules.length - 1; i >= 0; i--) {
             if (type === 'figure'  && evaluateRules[i].lockedFigure  !== undefined) evaluateRules.splice(i, 1);
@@ -244,9 +374,9 @@ function setupLockButtons(population) {
                 const fig = currentChrom.fg_type;
                 evaluateRules.push({ weight: 0, severity: 0, target: {}, lockedFigure: fig, lockedPattern: currentChrom.fg_pattern });
                 console.log(`[Lock] ${sideLabel}の形を固定: ${fig}`);
-                btnFigure.textContent = `🔒 形 (${fig})`;
+                btnFigure.textContent = `🔒 図形 (${fig})`; // ★ 修正
             } else {
-                btnFigure.textContent = '🔺 形';
+                btnFigure.textContent = '🔺 図形(丸･三角など)'; // ★ 修正
             }
             updateButtonStyles();
         });
@@ -276,9 +406,9 @@ function setupLockButtons(population) {
                 const pat = currentChrom.fg_pattern;
                 evaluateRules.push({ weight: 0, severity: 0, target: {}, lockedPattern: pat });
                 console.log(`[Lock] ${sideLabel}の柄を固定: ${pat}`);
-                btnPattern.textContent = `🔒 柄 (${pat})`;
+                btnPattern.textContent = `🔒 模様 (${pat})`; // ★ 修正
             } else {
-                btnPattern.textContent = '🔲 柄';
+                btnPattern.textContent = '🔲 模様(ドット･ストライプなど)'; // ★ 修正
             }
             updateButtonStyles();
         });
@@ -299,9 +429,9 @@ function setupLockButtons(population) {
             evaluateRules.push({ weight: 0, severity: 0, target: {}, lockedFigure: fig, lockedPattern: pat });
             evaluateRules.push({ weight: 0, severity: 0, target: {}, lockedColor: { h, s, l } });
             console.log(`[Lock] ${sideLabel}の全てを固定`);
-            btnFigure.textContent  = `🔒 形 (${fig})`;
+            btnFigure.textContent  = `🔒 図形 (${fig})`; // ★ 修正
             btnColor.textContent   = `🔒 色`;
-            btnPattern.textContent = `🔒 柄 (${pat})`;
+            btnPattern.textContent = `🔒 模様 (${pat})`; // ★ 修正
             updateButtonStyles();
         });
     });
@@ -317,9 +447,9 @@ function setupLockButtons(population) {
             const btnF = document.getElementById(`btn-lockFigure_${genCount}_${s}`);
             const btnC = document.getElementById(`btn-lockColor_${genCount}_${s}`);
             const btnP = document.getElementById(`btn-lockPattern_${genCount}_${s}`);
-            if (btnF) { btnF.textContent = '🔺 形'; btnF.classList.remove('btn-lock--active'); }
+            if (btnF) { btnF.textContent = '🔺 図形(丸･三角など)'; btnF.classList.remove('btn-lock--active'); } // ★ 修正
             if (btnC) { btnC.textContent = '🎨 色'; btnC.classList.remove('btn-lock--active'); }
-            if (btnP) { btnP.textContent = '🔲 柄'; btnP.classList.remove('btn-lock--active'); }
+            if (btnP) { btnP.textContent = '🔲 模様(ドット･ストライプなど)'; btnP.classList.remove('btn-lock--active'); } // ★ 修正
         });
         removeLockRules('all');
         console.log('[Lock] 全ての固定を解除');
@@ -333,6 +463,15 @@ function enableEvaluateBtn(population, kuromojiTokenizer) {
     setupLockButtons(population);
 
     elemEvaluateBtn.addEventListener('click', () => {
+        // ★ 戻る機能のために、現在の状態のバックアップと参照をセットで保存する
+        window.generationHistory.push({
+            populationBackup: JSON.parse(JSON.stringify(population)),
+            populationRef: population,
+            evaluateRulesBackup: JSON.parse(JSON.stringify(evaluateRules))
+        });
+        // 戻るボタンを表示する
+        document.getElementById('btn-undo').style.display = 'inline-block';
+
         // #MARK: 評価
         let elemAreaUserEvaluate = document.getElementById(`area-userEvaluate_${population.index}`);
         let evaluateText = elemAreaUserEvaluate.value;
@@ -342,6 +481,7 @@ function enableEvaluateBtn(population, kuromojiTokenizer) {
 
         elemAreaUserEvaluate.setAttribute('disabled', '');
         elemMsgEvaluate.style.display = 'inline-block';
+        elemEvaluateBtn.setAttribute('disabled', '');
         
         let currentZoom = 1.0;
         const bestCanvas = document.getElementById(`cv_${population.index}_0`);
@@ -354,35 +494,43 @@ function enableEvaluateBtn(population, kuromojiTokenizer) {
             population.chroms.forEach((chrom, i) => {
                 setFitnessScore(chrom);
             });
-            population = Population.crossover(population, evaluateRules);
-            appendGenCycle(population.index);
+            
+            // 次の世代の生成
+            const nextPopulation = Population.crossover(population, evaluateRules);
+            appendGenCycle(nextPopulation.index);
 
-            for(let i = 0; i < population.chroms.length; i++) {
+            for(let i = 0; i < nextPopulation.chroms.length; i++) {
                 const newCanvas = document.createElement("canvas");
-                newCanvas.id = `cv_${population.index}_${i}`;
+                newCanvas.id = `cv_${nextPopulation.index}_${i}`;
                 newCanvas.setAttribute('width', 512);
                 newCanvas.setAttribute('height', 384);
-                drawCanvas(newCanvas, population.chroms[i]);
-                let impression = getImpression(newCanvas, population.chroms[i]);
-                population.chroms[i]._impression = JSON.parse(JSON.stringify(impression));
+                drawCanvas(newCanvas, nextPopulation.chroms[i]);
+                let impression = getImpression(newCanvas, nextPopulation.chroms[i]);
+                nextPopulation.chroms[i]._impression = JSON.parse(JSON.stringify(impression));
                 
-                setFitnessScore(population.chroms[i]);
+                setFitnessScore(nextPopulation.chroms[i]);
                 
-                if (population.chroms[i]._impression.colors && population.chroms[i]._impression.colors.length <= 1) {
-                    population.chroms[i]._fitness -= 10000;
+                if (nextPopulation.chroms[i]._impression.colors && nextPopulation.chroms[i]._impression.colors.length <= 1) {
+                    nextPopulation.chroms[i]._fitness -= 10000;
                 }
             }
 
-            population.chroms.sort((a, b) => b._fitness - a._fitness);
-            population.bestChromId = 0;
+            nextPopulation.chroms.sort((a, b) => b._fitness - a._fitness);
+            nextPopulation.bestChromId = 0;
+            
+            if (nextPopulation.chroms[0]._impression && nextPopulation.chroms[0]._impression['情報']) {
+                    console.log(`========== 世代 ${nextPopulation.index} : ベスト個体の評価ログ ==========`);
+                    console.log(nextPopulation.chroms[0]._impression['情報'].join('\n'));
+                    console.log(` ★ 最終適応度(Fitness): ${nextPopulation.chroms[0]._fitness.toFixed(2)}`);
+            }
 
             let minDist = 0.5;
-            const bestChrom = population.chroms[population.bestChromId];
+            const bestChrom = nextPopulation.chroms[nextPopulation.bestChromId];
             const genParamKeys = Object.keys(Population.PARAMS);
-            population.pickupChromId = population.chroms.length - 1;
-            for(let i = population.chroms.length - 1; i > 0; i--) {
-                if(i != population.bestChromId) {
-                    const checkChrom = population.chroms[i];
+            nextPopulation.pickupChromId = nextPopulation.chroms.length - 1;
+            for(let i = nextPopulation.chroms.length - 1; i > 0; i--) {
+                if(i != nextPopulation.bestChromId) {
+                    const checkChrom = nextPopulation.chroms[i];
                     let dist2BestChrom = 0;
                     for(let j = 0; j < genParamKeys.length; j++) {
                         let paramKeyName = genParamKeys[j];
@@ -395,17 +543,17 @@ function enableEvaluateBtn(population, kuromojiTokenizer) {
                         (dist2BestChrom > minDist) &&
                         (checkChrom._impression.colors.length > 1)
                     ) {
-                        population.pickupChromId = i;
+                        nextPopulation.pickupChromId = i;
                     }
                 }
             }
 
-            [population.bestChromId, population.pickupChromId].forEach((chromId, i) => {
+            [nextPopulation.bestChromId, nextPopulation.pickupChromId].forEach((chromId, i) => {
                 const newCanvas = document.createElement("canvas");
-                newCanvas.id = `cv_${population.index}_${i}`;
+                newCanvas.id = `cv_${nextPopulation.index}_${i}`;
                 newCanvas.setAttribute('width', 512);
                 newCanvas.setAttribute('height', 384);
-                drawCanvas(newCanvas, population.chroms[chromId]);
+                drawCanvas(newCanvas, nextPopulation.chroms[chromId]);
 
                 // 第2世代以降のドロップ受け入れ設定（カメラ破棄の置換処理込み）
                 function attachDrop2(canvasElem, isLeftNode) {
@@ -413,18 +561,20 @@ function enableEvaluateBtn(population, kuromojiTokenizer) {
                         e.preventDefault(); 
                         canvasElem.style.boxShadow = isLeftNode ? "0 0 15px 5px #ff8c00" : "0 0 15px 5px #008cff";
                     });
-                    canvasElem.addEventListener('dragleave', () => {
-                        canvasElem.style.boxShadow = "none";
+                    // ★ 修正：ドラッグが乗っていない時も光らせておく
+                    canvasElem.addEventListener('dragleave', () => { 
+                        canvasElem.style.boxShadow = window.isDragging ? (isLeftNode ? "0 0 0 8px rgba(255, 140, 0, 0.4)" : "0 0 0 8px rgba(0, 140, 255, 0.4)") : "none";
                     });
                     canvasElem.addEventListener('drop', (e) => {
                         e.preventDefault();
+                        window.isDragging = false; // ★ ドラッグ終了
                         canvasElem.style.boxShadow = "none";
                         const draggedChromId = parseInt(e.dataTransfer.getData('text/plain'), 10);
                         if (!isNaN(draggedChromId)) {
                             if (isLeftNode) {
-                                population.bestChromId = draggedChromId;
+                                nextPopulation.bestChromId = draggedChromId;
                             } else {
-                                population.pickupChromId = draggedChromId;
+                                nextPopulation.pickupChromId = draggedChromId;
                             }
                             
                             const freshCanvas = document.createElement("canvas");
@@ -433,24 +583,24 @@ function enableEvaluateBtn(population, kuromojiTokenizer) {
                             freshCanvas.setAttribute('height', 384);
                             canvasElem.replaceWith(freshCanvas);
                             
-                            drawCanvas(freshCanvas, population.chroms[draggedChromId]);
-                            setupCanvasCamera(freshCanvas, population.chroms[draggedChromId]);
+                            drawCanvas(freshCanvas, nextPopulation.chroms[draggedChromId]);
+                            setupCanvasCamera(freshCanvas, nextPopulation.chroms[draggedChromId]);
                             attachDrop2(freshCanvas, isLeftNode);
 
                             // グリッドの選択状態を更新（もし表示されていれば）
-                            if (window[`updateGridSelection_${population.index}`]) {
-                                window[`updateGridSelection_${population.index}`]();
+                            if (window[`updateGridSelection_${nextPopulation.index}`]) {
+                                window[`updateGridSelection_${nextPopulation.index}`]();
                             }
                         }
                     });
                 }
                 attachDrop2(newCanvas, i === 0);
 
-                document.getElementById(`compareImages_${population.index}`).appendChild(newCanvas);
-                setupCanvasCamera(newCanvas, population.chroms[chromId]);
+                document.getElementById(`compareImages_${nextPopulation.index}`).appendChild(newCanvas);
+                setupCanvasCamera(newCanvas, nextPopulation.chroms[chromId]);
             });
 
-            enableEvaluateBtn(population, kuromojiTokenizer);
+            enableEvaluateBtn(nextPopulation, kuromojiTokenizer);
             elemMsgEvaluate.style.display = 'none';
 
             setTimeout(() => {
@@ -523,6 +673,28 @@ function enableEvaluateBtn(population, kuromojiTokenizer) {
             wrapper.addEventListener('dragstart', (e) => {
                 e.dataTransfer.setData('text/plain', i.toString());
                 e.dataTransfer.effectAllowed = "copy";
+                
+                // ★ 画像をつかんだ瞬間、親画像（ドロップ先）を光らせてアピールする
+                window.isDragging = true;
+                const leftCanvas = document.getElementById(`cv_${population.index}_0`);
+                const rightCanvas = document.getElementById(`cv_${population.index}_1`);
+                if(leftCanvas) {
+                    leftCanvas.style.transition = "box-shadow 0.2s ease";
+                    leftCanvas.style.boxShadow = "0 0 0 8px rgba(255, 140, 0, 0.5)";
+                }
+                if(rightCanvas) {
+                    rightCanvas.style.transition = "box-shadow 0.2s ease";
+                    rightCanvas.style.boxShadow = "0 0 0 8px rgba(0, 140, 255, 0.5)";
+                }
+            });
+
+            // ★ 画像を離した瞬間、光を消す
+            wrapper.addEventListener('dragend', (e) => {
+                window.isDragging = false;
+                const leftCanvas = document.getElementById(`cv_${population.index}_0`);
+                const rightCanvas = document.getElementById(`cv_${population.index}_1`);
+                if(leftCanvas) leftCanvas.style.boxShadow = "none";
+                if(rightCanvas) rightCanvas.style.boxShadow = "none";
             });
 
             const newCanvas = document.createElement("canvas");
@@ -564,9 +736,13 @@ function enableEvaluateBtn(population, kuromojiTokenizer) {
     }
 }
 
+// ★ 修正：すべての追加した柄のIDを網羅
+// ★ 修正：末尾に 17, 18, 19 を追加！
 const patternNumMap = {
     'none':0, 'dot':1, 'stripe':2, 'checker':3, 'gingham':4, 'tartan':5, 
-    'buffalo':6, 'houndstooth':7, 'windowpane':8, 'argyle':9, 'madras':10, 'cloud':11, 'neon':12
+    'buffalo':6, 'houndstooth':7, 'windowpane':8, 'argyle':9, 'madras':10, 'cloud':11, 'neon':12,
+    'wave': 13, 'showerdot': 14, 'kirakira': 15, 'karakusa': 16,
+    'clusterstripe': 17, 'clubstripe': 18, 'multistripe': 19 // ★追加
 };
 
 function fixChromString(value) {
@@ -575,7 +751,8 @@ function fixChromString(value) {
     if (value === 'ellipse') return 0.5;
     if ((value === 'linear') || (value === 'radial') || (value === 'square')) return 2;
     if ((value === 'triangle') || (value === 'conic')) return 3;
-    return Number(value) || 0; // NaNは強制的に0へクランプ
+    if (value === 'star') return 4; 
+    return Number(value) || 0; 
 }
 
 // ==========================================

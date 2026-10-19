@@ -355,7 +355,7 @@ export default function getImpression(canvas, chrom) {
 
 		return impression;
 	}
-
+	
 	// #MARK: 代表色を取得
 	function getNearestMajorColor(r, g, b) {
 		let minDist = 3 * 255 * 255;

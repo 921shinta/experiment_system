@@ -1,5 +1,4 @@
 export default function drawCanvas(canvas, gen = new Object(), camera = { x: 0, y: 0, zoom: 1.0 }, test = false) {
-    
     if(canvas.getContext) {
         let ctx = canvas.getContext('2d');
         const CV_WIDTH = Number(canvas.width);
@@ -20,8 +19,10 @@ export default function drawCanvas(canvas, gen = new Object(), camera = { x: 0, 
         let bgOriginY = Number(gen.bgGradient_center_y) * CV_HEIGHT + CV_HEIGHT / 2;
         let waveLen = Number(gen.bgGradient_wave_len) * Math.max(CV_WIDTH, CV_HEIGHT);
         let waveAngleRad = torad(gen.bgGradient_wave_angle);
-        let bgLit0 = Math.max(35, Number(gen.bgColor_lightness));
-        let bgLit1 = Math.max(35, Number(gen.bgGradient_color_lightness));
+        
+        // ★ 修正：リミッターの Math.max などを全撤廃し、ダイレクトに数値を使う！
+        let bgLit0 = Number(gen.bgColor_lightness);
+        let bgLit1 = Number(gen.bgGradient_color_lightness);
         let bgColors = [
             `hsl(${gen.bgColor_hue} ${gen.bgColor_saturation}% ${bgLit0}%)`,
             `hsl(${gen.bgGradient_color_hue} ${gen.bgGradient_color_saturation}% ${bgLit1}%)`
@@ -72,12 +73,9 @@ export default function drawCanvas(canvas, gen = new Object(), camera = { x: 0, 
                 else{conicgradient.addColorStop(Math.min(endCount,i)/endCount,bgColors[1]);conicgradient.addColorStop(Math.min(endCount,i+1-bgColorStops[1])/endCount,bgColors[1]);conicgradient.addColorStop(Math.min(endCount,i+1-bgColorStops[0])/endCount,bgColors[0]);conicgradient.addColorStop(Math.min(endCount,i+1)/endCount,bgColors[0]);}
             }
             ctx.fillStyle = conicgradient;
-        }else{console.error('draw: gen.bgGradient_type が無効な値です');}
+        }
         ctx.fillRect(0,0,CV_WIDTH,CV_HEIGHT);
 
-        /* ========================
-        | 図形または柄の描画
-        ======================== */
         let fgPatternType = gen.fg_pattern || 'none';
         let fgShapeType   = gen.fg_type || 'circle';
         let fgShapeType2  = gen.fg_type2 || null;
@@ -95,7 +93,10 @@ export default function drawCanvas(canvas, gen = new Object(), camera = { x: 0, 
         gen._calculated = new Object();
         let fgFillColorHue = Number(gen.fg_fill_hue);
         let fgFillColorSaturation = Number(gen.fg_fill_saturation);
-        let fgFillColorLightness = Math.min(85, Math.max(35, Number(gen.fg_fill_lightness))); 
+        
+        // ★ 修正：リミッターの Math.min や Math.max を全撤廃！
+        let fgFillColorLightness = Number(gen.fg_fill_lightness); 
+        
         let fgFillColorAlpha = Number(gen.fg_fill_alpha);
         let fgStrokeWidth = Number(gen.fg_stroke_width);
         const fgStrokeColorHue = Number(gen.fg_stroke_color_hue)+fgFillColorHue;
@@ -144,10 +145,18 @@ export default function drawCanvas(canvas, gen = new Object(), camera = { x: 0, 
             const patternAngle = fgRepeatRotateOrigin;
 
             const colorA = bgColors[0];
+            
             const colorBHue = fgFillColorHue + fgRepeatChangeColorAHue * 30;
             const colorBSat = Math.max(0, Math.min(100, fgFillColorSaturation + fgRepeatChangeColorASaturation * 10));
             const colorBLit = Math.max(0, Math.min(100, fgFillColorLightness + fgRepeatChangeColorALightness * 10));
-            const colorB = `hsla(${colorBHue} ${colorBSat}% ${colorBLit}% / ${fgFillColorAlpha}%)`;
+            
+            let colorB;
+            if (gen._absolute_colorB) {
+                colorB = gen._absolute_colorB;
+            } else {
+                colorB = `hsla(${colorBHue} ${colorBSat}% ${colorBLit}% / ${fgFillColorAlpha}%)`;
+            }
+            
             const colorCHue = fgFillColorHue + fgRepeatChangeColorBHue * 60;
             const colorCSat = Math.max(0, Math.min(100, fgFillColorSaturation + fgRepeatChangeColorBSaturation * 10));
             const colorCLit = Math.max(0, Math.min(100, fgFillColorLightness + fgRepeatChangeColorBLightness * 10));
@@ -170,6 +179,35 @@ export default function drawCanvas(canvas, gen = new Object(), camera = { x: 0, 
                 patCtx.fillStyle = colorB;
                 patCtx.fill();
 
+            } else if (fgPatternType === 'showerdot') {
+                const dotRatio = Math.min(0.25, Math.max(0.02, normalizedThickness * 0.25));
+                const w = cs * 3;
+                patCanvas.width = patCanvas.height = w;
+                patCtx.fillStyle = colorA;
+                patCtx.fillRect(0, 0, w, w);
+                patCtx.fillStyle = colorB;
+                
+                let seedS = Math.abs((Number(gen.fg_size_x0)||0)*123.4 + (Number(gen.fg_size_y0)||0)*567.8 + (Number(gen.bgColor_hue)||0));
+                const randS = () => { let x = Math.sin(seedS++) * 10000; return x - Math.floor(x); };
+                
+                for(let i=0; i<30; i++){
+                    let px = randS();
+                    let py = randS();
+                    let pr = 0.2 + randS() * 0.6; 
+                    
+                    let cx = w * px;
+                    let cy = w * py;
+                    let radius = Math.abs(w * dotRatio * pr);
+
+                    for(let dx = -1; dx <= 1; dx++) {
+                        for(let dy = -1; dy <= 1; dy++) {
+                            patCtx.beginPath(); 
+                            patCtx.arc(cx + dx * w, cy + dy * w, radius, 0, 2*Math.PI); 
+                            patCtx.fill();
+                        }
+                    }
+                }
+
             } else if (fgPatternType === 'stripe') {
                 const stripeRatio = Math.min(0.95, Math.max(0.05, normalizedThickness));
                 patCanvas.width = patCanvas.height = cs;
@@ -177,6 +215,72 @@ export default function drawCanvas(canvas, gen = new Object(), camera = { x: 0, 
                 patCtx.fillRect(0, 0, cs, cs);
                 patCtx.fillStyle = colorB;
                 patCtx.fillRect(0, 0, cs * stripeRatio, cs);
+
+            // ★追加1：クラスター・ストライプ（複数本の細い線のセット）
+            } else if (fgPatternType === 'clusterstripe') {
+                const w = cs * 2;
+                patCanvas.width = patCanvas.height = w;
+                patCtx.fillStyle = colorA;
+                patCtx.fillRect(0, 0, w, w);
+                
+                patCtx.fillStyle = colorB;
+                const lineCount = 4; // 1セットあたりの線の数
+                const lineWidth = Math.max(1, w * 0.05); // 線の太さ
+                const gap = lineWidth * 1.5; // 線と線の間隔
+                const setWidth = (lineWidth + gap) * lineCount;
+                
+                // 1セットのストライプを描画（左寄りに配置）
+                for (let i = 0; i < lineCount; i++) {
+                    patCtx.fillRect(i * (lineWidth + gap), 0, lineWidth, w);
+                }
+
+            // ★追加2：クラブ・ストライプ（印象の強い2〜3色の太い線）
+            } else if (fgPatternType === 'clubstripe') {
+                const w = cs * 3;
+                patCanvas.width = patCanvas.height = w;
+                patCtx.fillStyle = colorA;
+                patCtx.fillRect(0, 0, w, w);
+                
+                // 3色のブロックを等間隔で配置
+                patCtx.fillStyle = colorB;
+                patCtx.fillRect(w * 0.33, 0, w * 0.33, w);
+                
+                patCtx.fillStyle = colorC;
+                patCtx.fillRect(w * 0.66, 0, w * 0.34, w);
+                
+                // アクセントの細い白線を入れる
+                patCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                patCtx.fillRect(w * 0.33 - 2, 0, 4, w);
+                patCtx.fillRect(w * 0.66 - 2, 0, 4, w);
+
+            // ★追加3：マルチ・ストライプ（幅や色がバラバラの多数の線）
+            } else if (fgPatternType === 'multistripe') {
+                const w = cs * 5; // タイルを大きくしてランダム感を出す
+                patCanvas.width = patCanvas.height = w;
+                patCtx.fillStyle = colorA;
+                patCtx.fillRect(0, 0, w, w);
+                
+                // シード値付きの疑似乱数で、同じパラメータなら常に同じ柄になるようにする
+                let seedM = Math.abs((Number(gen.fg_size_x0)||0)*111 + (Number(gen.bgColor_hue)||0)*222);
+                const randM = () => { let x = Math.sin(seedM++) * 10000; return x - Math.floor(x); };
+                
+                const colors = [
+                    colorB, colorC, 
+                    `hsla(${(fgFillColorHue + 120) % 360} ${colorBSat}% ${colorBLit}% / ${fgFillColorAlpha}%)`, // 補色っぽい色1
+                    `hsla(${(fgFillColorHue + 240) % 360} ${colorCSat}% ${colorCLit}% / ${fgFillColorAlpha}%)`  // 補色っぽい色2
+                ];
+                
+                let currentX = 0;
+                while (currentX < w) {
+                    const lineWidth = w * (0.02 + randM() * 0.1); // 幅をランダムに
+                    const color = colors[Math.floor(randM() * colors.length)]; // 色をランダムに選択
+                    
+                    patCtx.fillStyle = color;
+                    patCtx.fillRect(currentX, 0, lineWidth, w);
+                    
+                    // 次の線までの隙間（詰めるか少し空けるか）
+                    currentX += lineWidth + (randM() > 0.7 ? w * 0.02 : 0);
+                }
 
             } else if (fgPatternType === 'checker' || fgPatternType === 'gingham') {
                 patCanvas.width = patCanvas.height = cs * 2;
@@ -190,8 +294,6 @@ export default function drawCanvas(canvas, gen = new Object(), camera = { x: 0, 
                     patCtx.fillStyle = colorB; patCtx.fillRect(cs, 0, cs, cs*2); patCtx.fillRect(0, cs, cs*2, cs); 
                     patCtx.globalAlpha = 1.0;
                 }
-
-            
 
             } else if (fgPatternType === 'houndstooth') {
                 patCanvas.width = patCanvas.height = cs * 4;
@@ -221,6 +323,7 @@ export default function drawCanvas(canvas, gen = new Object(), camera = { x: 0, 
                     patCtx.lineTo(cx, cy + ah/2); patCtx.lineTo(cx - aw/2, cy); patCtx.closePath(); patCtx.fill();
                 };
                 patCtx.fillStyle = colorB; drawDiamond(aw/2, 0); drawDiamond(aw/2, ah);
+                
                 const colorDLit = Math.max(0, fgFillColorLightness - 30);
                 const colorD = `hsla(${colorBHue} ${colorBSat}% ${colorDLit}% / ${fgFillColorAlpha}%)`;
                 patCtx.fillStyle = colorD; drawDiamond(aw/2, ah/2); drawDiamond(0, 0); drawDiamond(aw, 0); drawDiamond(0, ah); drawDiamond(aw, ah);
@@ -286,9 +389,145 @@ export default function drawCanvas(canvas, gen = new Object(), camera = { x: 0, 
                 if (lineCount >= 2) { const hy = fw * ((originOffsetY + 0.4) % 1.0); drawNeonLine(0, hy, fw, hy, hueC, sat, lit); }
                 if (lineCount >= 3) { const dx2 = Math.cos(angleRad + Math.PI / 3) * fw * 2, dy2 = Math.sin(angleRad + Math.PI / 3) * fw * 2, cx2 = fw * ((originOffsetX + 0.5) % 1.0), cy2 = fw * ((originOffsetY + 0.5) % 1.0); drawNeonLine(cx2 - dx2, cy2 - dy2, cx2 + dx2, cy2 + dy2, hueB, sat, lit); }
                 patCtx.shadowBlur = 0;
+            
+            } else if (fgPatternType === 'wave') {
+                const w = cs * 4;
+                patCanvas.width = patCanvas.height = w;
+                patCtx.fillStyle = colorA; 
+                patCtx.fillRect(0, 0, w, w);
+                
+                patCtx.strokeStyle = colorB;
+                patCtx.lineWidth = Math.max(2, cs * 0.3);
+                patCtx.lineCap = 'round';
+                patCtx.lineJoin = 'round';
+                
+                const waveCount = 2;
+                const amp = cs * 0.5;
+                const yStep = cs;
+                
+                for (let y = -yStep; y <= w + yStep; y += yStep) {
+                    patCtx.beginPath();
+                    for (let x = -cs; x <= w + cs; x += 1) {
+                        const waveY = Math.sin((x / w) * Math.PI * 2 * waveCount) * amp;
+                        if (x === -cs) patCtx.moveTo(x, y + waveY);
+                        else patCtx.lineTo(x, y + waveY);
+                    }
+                    patCtx.stroke();
+                }
+
+            } else if (fgPatternType === 'karakusa') {
+                // ★ 追加：唐草模様（アラベスク）の描画ロジック
+                const w = cs * 4;
+                patCanvas.width = patCanvas.height = w;
+                patCtx.fillStyle = colorA;
+                patCtx.fillRect(0, 0, w, w);
+                
+                patCtx.strokeStyle = colorB;
+                patCtx.fillStyle = colorB;
+                patCtx.lineWidth = Math.max(1.5, cs * 0.15);
+                patCtx.lineCap = 'round';
+                patCtx.lineJoin = 'round';
+                
+                const step = w / 2;
+                
+                // くるくる（蔓）を描く関数
+                const drawVine = (cx, cy, radius, startAngle, isReverse) => {
+                    patCtx.beginPath();
+                    for (let i = 0; i <= 30; i++) {
+                        let progress = i / 30;
+                        let currentAngle = startAngle + (isReverse ? -1 : 1) * progress * Math.PI * 3; // 1.5回転
+                        let currentRadius = radius * (1 - progress);
+                        let px = cx + Math.cos(currentAngle) * currentRadius;
+                        let py = cy + Math.sin(currentAngle) * currentRadius;
+                        if (i === 0) patCtx.moveTo(px, py);
+                        else patCtx.lineTo(px, py);
+                    }
+                    patCtx.stroke();
+                    
+                    // 葉っぱの装飾
+                    patCtx.beginPath();
+                    let leafAngle = startAngle + (isReverse ? -1 : 1) * Math.PI * 0.8;
+                    patCtx.ellipse(
+                        cx + Math.cos(leafAngle) * radius * 0.8, 
+                        cy + Math.sin(leafAngle) * radius * 0.8, 
+                        radius * 0.4, radius * 0.2, 
+                        leafAngle, 0, Math.PI * 2
+                    );
+                    patCtx.fill();
+                };
+
+                // タイル状に敷き詰める（はみ出しを考慮して -step から w+step まで）
+                for (let x = -step; x <= w + step; x += step) {
+                    for (let y = -step; y <= w + step; y += step) {
+                        let isEven = Math.abs((x / step) + (y / step)) % 2 === 0;
+                        let angleOffset = isEven ? 0 : Math.PI;
+                        drawVine(x, y, step * 0.6, angleOffset, isEven);
+                        
+                        // 蔓同士をつなぐS字カーブ
+                        if (x < w + step) {
+                            patCtx.beginPath();
+                            patCtx.moveTo(x, y);
+                            patCtx.bezierCurveTo(x + step * 0.5, y + step * 0.2, x + step * 0.5, y - step * 0.2, x + step, y);
+                            patCtx.stroke();
+                        }
+                    }
+                }
+
+            } else if (fgPatternType === 'kirakira') {
+                const fw = Math.max(CV_WIDTH, CV_HEIGHT);
+                patCanvas.width = CV_WIDTH; 
+                patCanvas.height = CV_HEIGHT;
+                patCtx.clearRect(0, 0, fw, fw);
+
+                patCtx.fillStyle = colorA;
+                patCtx.fillRect(0, 0, fw, fw);
+
+                let seedK = Math.abs((Number(gen.fg_size_x0)||0)*123.4 + (Number(gen.fg_size_y0)||0)*567.8 + (Number(gen.bgColor_hue)||0));
+                const randK = () => { let x = Math.sin(seedK++) * 10000; return x - Math.floor(x); };
+
+                patCtx.globalAlpha = 0.6;
+                patCtx.filter = `blur(${Math.max(1, fw * 0.1)}px)`;
+
+                patCtx.fillStyle = colorB;
+                patCtx.beginPath(); patCtx.arc(fw*(0.1+randK()*0.3), fw*(0.1+randK()*0.3), Math.abs(fw*(0.4+randK()*0.3)), 0, Math.PI*2); patCtx.fill();
+                patCtx.beginPath(); patCtx.arc(fw*(0.6+randK()*0.3), fw*(0.6+randK()*0.3), Math.abs(fw*(0.4+randK()*0.3)), 0, Math.PI*2); patCtx.fill();
+
+                patCtx.fillStyle = colorC;
+                patCtx.beginPath(); patCtx.arc(fw*(0.6+randK()*0.3), fw*(0.1+randK()*0.3), Math.abs(fw*(0.4+randK()*0.3)), 0, Math.PI*2); patCtx.fill();
+                patCtx.beginPath(); patCtx.arc(fw*(0.1+randK()*0.3), fw*(0.6+randK()*0.3), Math.abs(fw*(0.4+randK()*0.3)), 0, Math.PI*2); patCtx.fill();
+                
+                patCtx.filter = 'none';
+                patCtx.globalAlpha = 1.0;
+
+                const drawSparkle = (x, y, size) => {
+                    patCtx.save();
+                    patCtx.translate(fw*x, fw*y);
+                    patCtx.fillStyle = '#ffffff';
+                    patCtx.shadowColor = '#ffffff';
+                    patCtx.shadowBlur = Math.abs(size * 3);
+                    
+                    patCtx.beginPath(); patCtx.arc(0, 0, Math.abs(size), 0, Math.PI*2); patCtx.fill();
+                    patCtx.beginPath(); patCtx.ellipse(0, 0, Math.abs(size*6), Math.abs(size*0.5), 0, 0, Math.PI*2); patCtx.fill();
+                    patCtx.beginPath(); patCtx.ellipse(0, 0, Math.abs(size*0.5), Math.abs(size*6), 0, 0, Math.PI*2); patCtx.fill();
+                    patCtx.restore();
+                };
+
+                let numSparkles = 5 + Math.floor(randK() * 5); // 5〜9個
+                for(let i=0; i < numSparkles; i++){
+                    drawSparkle(randK(), randK(), fw*(0.003 + randK()*0.004));
+                }
+
+                patCtx.fillStyle = '#ffffff';
+                patCtx.globalAlpha = 0.8;
+                for(let i=0; i<50; i++){
+                    patCtx.beginPath(); 
+                    patCtx.arc(fw*randK(), fw*randK(), Math.abs(fw*(0.001 + randK()*0.002)), 0, Math.PI*2); 
+                    patCtx.fill();
+                }
+                patCtx.globalAlpha = 1.0;
             }
 
-            if (fgPatternType === 'cloud' || fgPatternType === 'neon') {
+            if (['cloud', 'neon', 'kirakira'].includes(fgPatternType)) {
                 ctx.drawImage(patCanvas, 0, 0, CV_WIDTH, CV_HEIGHT);
             } else {
                 const pattern = ctx.createPattern(patCanvas, 'repeat');
@@ -346,6 +585,22 @@ export default function drawCanvas(canvas, gen = new Object(), camera = { x: 0, 
                         ctx.rect(-sqW, -sqH, sqW * 2, sqH * 2);            
                         ctx.restore();
                     }
+                    else if(activeShapeType=='star'){
+                        let points = 5;
+                        let outerRadius = Math.max(Math.abs(drawShapeSize[0]), Math.abs(drawShapeSize[1])) * 1.5; 
+                        let innerRadius = outerRadius * 0.4;
+                        ctx.save();
+                        ctx.translate(drawShapeCenterX, drawShapeCenterY); 
+                        ctx.rotate(drawShapeRotate - Math.PI / 2);                   
+                        ctx.moveTo(outerRadius, 0);            
+                        for (let k = 1; k <= points * 2; k++) {
+                            let radius = k % 2 === 0 ? outerRadius : innerRadius;
+                            let angle = k * Math.PI / points;
+                            ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+                        }
+                        ctx.closePath();
+                        ctx.restore();
+                    }
                     
                     if (gen.effect_neon === true) { ctx.shadowColor = drawShapeFill; ctx.shadowBlur = 25; } else { ctx.shadowBlur = 0; }
                     ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
@@ -381,12 +636,9 @@ export function setupCanvasCamera(canvas, gen) {
     function clampCameraPosition() {
         const cw = Number(canvas.width);
         const ch = Number(canvas.height);
-
         if (isPatternMode) {
             if (camera.zoom <= 1.0) {
-                camera.x = 0;
-                camera.y = 0;
-                return;
+                camera.x = 0; camera.y = 0; return;
             }
             const maxOffsetX = (cw * (camera.zoom - 1)) / 2;
             const maxOffsetY = (ch * (camera.zoom - 1)) / 2;
@@ -396,37 +648,24 @@ export function setupCanvasCamera(canvas, gen) {
     }
 
     function getAngleFromCenter(e) {
-        const cw = Number(canvas.width);
-        const ch = Number(canvas.height);
-        const dx = e.offsetX - cw / 2;
-        const dy = e.offsetY - ch / 2;
+        const cw = Number(canvas.width); const ch = Number(canvas.height);
+        const dx = e.offsetX - cw / 2; const dy = e.offsetY - ch / 2;
         return Math.atan2(dy, dx);
     }
 
     canvas.addEventListener('mousedown', (e) => {
-        if (e.shiftKey) {
-            camera.isRotating = true;
-            camera.rotateStartAngle = getAngleFromCenter(e);
-            camera.rotateStartRotation = camera.rotation;
-        } else {
-            camera.isDragging = true;
-            camera.startX = e.offsetX - camera.x;
-            camera.startY = e.offsetY - camera.y;
-        }
+        if (e.shiftKey) { camera.isRotating = true; camera.rotateStartAngle = getAngleFromCenter(e); camera.rotateStartRotation = camera.rotation; } 
+        else { camera.isDragging = true; camera.startX = e.offsetX - camera.x; camera.startY = e.offsetY - camera.y; }
     });
     canvas.addEventListener('mousemove', (e) => {
         if (camera.isRotating) {
-            const currentAngle = getAngleFromCenter(e);
-            const rotation_sensitibity = 3;
+            const currentAngle = getAngleFromCenter(e); const rotation_sensitibity = 3;
             camera.rotation = camera.rotateStartRotation + (currentAngle - camera.rotateStartAngle)*rotation_sensitibity;
-            drawCanvas(canvas, genSnapshot, camera);
-            return;
+            drawCanvas(canvas, genSnapshot, camera); return;
         }
         if (!camera.isDragging) return;
-        camera.x = e.offsetX - camera.startX;
-        camera.y = e.offsetY - camera.startY;
-        clampCameraPosition();
-        drawCanvas(canvas, genSnapshot, camera);
+        camera.x = e.offsetX - camera.startX; camera.y = e.offsetY - camera.startY;
+        clampCameraPosition(); drawCanvas(canvas, genSnapshot, camera);
     });
     canvas.addEventListener('mouseup', () => { camera.isDragging = false; camera.isRotating = false; });
     canvas.addEventListener('mouseleave', () => { camera.isDragging = false; camera.isRotating = false; });
@@ -434,7 +673,6 @@ export function setupCanvasCamera(canvas, gen) {
         e.preventDefault();
         const zoomAmount = e.deltaY * -0.001;
         camera.zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, camera.zoom + zoomAmount));
-        clampCameraPosition();
-        drawCanvas(canvas, genSnapshot, camera);
+        clampCameraPosition(); drawCanvas(canvas, genSnapshot, camera);
     }, { passive: false });
 }

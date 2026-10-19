@@ -4,21 +4,21 @@ export const POPULATION_SIZE = 20;
 const MUTATION = true;
 const MUTATION_RATE = 0.05;
 
-// マッピング用の定義（コードの肥大化を防ぐため配列化）
+// ★修正1：新しく追加した3つの柄（wave, showerdot, kirakira）を追加！
 export const FIGURE_TYPES = ['circle', 'ellipse', 'triangle', 'square'];
-export const PATTERN_TYPES = ['none', 'dot', 'stripe', 'checker', 'gingham', 'tartan', 'buffalo', 'houndstooth', 'windowpane', 'argyle', 'madras', 'cloud', 'neon'];
+export const PATTERN_TYPES = ['none', 'dot', 'stripe', 'checker', 'gingham', 'tartan', 'buffalo', 'houndstooth', 'windowpane', 'argyle', 'madras', 'cloud', 'neon', 'wave', 'showerdot', 'kirakira'];
 const BG_GRADIENT_TYPES = ['none', 'linear', 'radial', 'conic'];
 
 export const PARAMS = {
     // 背景色
     "bgColor_hue": [0, 359, 1],
     "bgColor_saturation": [0, 100, 1],
-    "bgColor_lightness": [0, 100, 1],
+    "bgColor_lightness": [35, 85, 1], // ★ 修正: 0,100 を 35,85 に変更！
     // 背景グラデーション
     "bgGradient_type": [0, 3, 1],
     "bgGradient_color_hue": [0, 359, 1],
     "bgGradient_color_saturation": [0, 100, 1],
-    "bgGradient_color_lightness": [0, 100, 1],
+    "bgGradient_color_lightness": [35, 85, 1], // ★ 修正: 0,100 を 35,85 に変更！
     "bgGradient_center_x": [-2, 2, 0.01],
     "bgGradient_center_y": [-2, 2, 0.01],
     "bgGradient_wave_len": [0.005, 2, 0.005],
@@ -26,9 +26,9 @@ export const PARAMS = {
     "bgGradient_colorStop_0": [0, 1, 0.01],
     "bgGradient_colorStop_1": [0, 1, 0.01],
 
-    // 図形(type)は単一図形[0,3]、柄(pattern)[0,12]
+    // ★修正2：柄(pattern)の上限を 12 から 15 に変更！
     "fg_type": [0, 3, 1],
-    "fg_pattern": [0, 12, 1],
+    "fg_pattern": [0, 15, 1],
 
     "fg_repeat_origin_x": [-0.6, 0.6, 0.01],
     "fg_repeat_origin_y": [-0.6, 0.6, 0.01],
@@ -41,7 +41,7 @@ export const PARAMS = {
     "fg_size_y2": [-0.4, 0.4, 0.001],
     "fg_fill_hue": [0, 359, 1],
     "fg_fill_saturation": [0, 100, 1],
-    "fg_fill_lightness": [0, 100, 1],
+    "fg_fill_lightness": [35, 85, 1], // ★ 修正: 0,100 を 35,85 に変更！
     "fg_fill_alpha": [0, 100, 1],
     "fg_stroke_color_hue": [-15, 15, 1],
     "fg_stroke_color_saturation": [-6, 6, 1],
@@ -326,6 +326,26 @@ export function crossover(population, evaluateRules = []) {
                     chrom.fg_fill_hue                 = h;
                     chrom.fg_fill_saturation          = s;
                     chrom.fg_fill_lightness           = l;
+                });
+            }
+
+            // ★修正3：次世代の子供たちに対しても「〜しないで」の否定ルールを強制適用！
+            // 過去のロックや突然変異で間違えて波模様などが選ばれても、ここで確実に排除します。
+            if (rule.negativeFigures && rule.negativeFigures.length > 0) {
+                newChroms.forEach(chrom => {
+                    if (rule.negativeFigures.includes(chrom.fg_type)) {
+                        const altFigures = FIGURE_TYPES.filter(f => !rule.negativeFigures.includes(f));
+                        if (altFigures.length > 0) chrom.fg_type = altFigures[Math.floor(Math.random() * altFigures.length)];
+                    }
+                });
+            }
+
+            if (rule.negativePatterns && rule.negativePatterns.length > 0) {
+                newChroms.forEach(chrom => {
+                    if (rule.negativePatterns.includes(chrom.fg_pattern)) {
+                        const altPatterns = PATTERN_TYPES.filter(p => !rule.negativePatterns.includes(p));
+                        if (altPatterns.length > 0) chrom.fg_pattern = altPatterns[Math.floor(Math.random() * altPatterns.length)];
+                    }
                 });
             }
         });
