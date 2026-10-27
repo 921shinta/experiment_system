@@ -6,12 +6,14 @@ import { setFitnessScore, makeEvaluateRule, analyzeInitialText } from "./_evalua
 import getTables from "./_getTables.js";
 import * as Estimation from "./_estimation.js";
 import { loadModel, preloadDictVectors } from "./_similarity.js";
+// 評価実験用: 画像の遺伝子・評価文・操作の履歴
+import { recordShown, recordEvaluate, recordEvent } from "./_history.js";
 
 export const dics = new Object();
 export const evaluateRules = [];
 
 // ★ 古いプログラムをオフにする設定
-const isAvailableEstimation = false;
+const isAvailableEstimation = true;
 
 // ★ 実験ログ（入力履歴）を貯めておくための配列を追加
 window.experimentLogs = [];
@@ -64,6 +66,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
             // 5. ログに「戻った」ことを記録する
             window.experimentLogs.push(`--- [操作] 世代: ${prevGenIndex} に戻り、やり直しました ---`);
+            recordEvent('undo', { g: prevGenIndex });
 
             // 履歴が空になったら戻るボタンを隠す
             if (window.generationHistory.length === 0) {
@@ -213,6 +216,7 @@ function main() {
         
         // ★ 初期入力のログを記録
         window.experimentLogs.push(`世代: 0 (初期入力), 評価文: ${initialText || "（空欄・完全ランダム）"}`);
+        recordEvaluate(0, initialText || '');
 
         let analysis = null;
         if (initialText && initialText.trim()) {
@@ -246,6 +250,8 @@ async function startGeneration(kuromojiTokenizer, initialText) {
         evaluateRules.length = 0;
         console.log('[Initial] makeEvaluateRule による初期集団の強制書き換えが完了しました');
     }
+
+    window.currentPopulation = population; // 最終世代の記録用
 
     let firstGenDrawCount = 0;
     const elemMsgGenerating = document.getElementById(`msg-userEvaluate_1`);
@@ -478,6 +484,9 @@ function enableEvaluateBtn(population, kuromojiTokenizer) {
 
         // ★ 各世代の評価文をログに記録
         window.experimentLogs.push(`世代: ${population.index}, 評価文: ${evaluateText || "（空欄）"}`);
+        // 評価した時点の左右の個体(ドラッグで差し替えた後のもの)・カメラ・ロック状態を記録
+        recordShownPair(population, population.index, { locks: getActiveLocks() });
+        recordEvaluate(population.index, evaluateText);
 
         elemAreaUserEvaluate.setAttribute('disabled', '');
         elemMsgEvaluate.style.display = 'inline-block';
@@ -756,40 +765,36 @@ function fixChromString(value) {
 }
 
 // ==========================================
-// 評価実験用のデータ回収プログラム（Googleフォーム直結版）
+// 評価実験用: 履歴の記録(送信は _estimation.js が行う)
 // ==========================================
-window.addEventListener('DOMContentLoaded', () => {
-    // 学籍番号のスライダー連動機能
-    const numInput = document.getElementById('student_num');
-    const rangeInput = document.getElementById('student_num_range');
-    if (numInput && rangeInput) {
-        numInput.addEventListener('input', () => rangeInput.value = numInput.value);
-        rangeInput.addEventListener('input', () => numInput.value = rangeInput.value);
-    }
+function getCamera(genIndex, side) {
+    const cv = document.getElementById(`cv_${genIndex}_${side}`);
+    const c = cv && cv.__cameraState;
+    return c ? { x: Math.round(c.x), y: Math.round(c.y), zoom: Number(c.zoom.toFixed(3)), rotation: Number((c.rotation || 0).toFixed(3)) } : null;
+}
 
-    const validateBtn = document.getElementById('validate');
-    if (validateBtn) {
-        validateBtn.addEventListener('click', function(e) {
-            const form = document.getElementById('estimationForm');
-            
-            // 空欄がないかチェック（必須項目の確認）
-            if (!form.checkValidity()) {
-                form.reportValidity(); // 「このフィールドを入力してください」という警告を出す
-                return; // エラーがあれば送信をストップ
-            }
+function getActiveLocks() {
+    return evaluateRules
+        .filter(r => r.lockedFigure !== undefined || r.lockedColor !== undefined || r.lockedPattern !== undefined)
+        .map(r => ({ fig: r.lockedFigure, pat: r.lockedPattern, col: r.lockedColor }));
+}
 
-            // 貯めていた操作ログを、HTMLの見えない入力欄（system_log）にセットする
-            const logInput = document.getElementById('system_log');
-            if (logInput) {
-                if (window.experimentLogs && window.experimentLogs.length > 0) {
-                    logInput.value = window.experimentLogs.join('\n');
-                } else {
-                    logInput.value = "※ログなし";
-                }
-            }
+// 左(best)・右(pickup)の2枚を履歴に記録。extra は左の1枚目にだけ付ける
+function recordShownPair(population, genIndex, extra = {}) {
+    [['best', population.bestChromId, 0], ['pickup', population.pickupChromId, 1]].forEach(([role, id, side]) => {
+        const chrom = population.chroms[id];
+        if (!chrom) return;
+        recordShown(genIndex, role, chrom, Object.assign({ cam: getCamera(genIndex, side) }, side === 0 ? extra : {}));
+    });
+}
 
-            // e.preventDefault() を呼ばないことで、HTMLの標準機能により
-            // フォームの内容がGoogleフォーム（/formResponse）へ直接送信され、別タブで完了画面が開きます。
-        });
-    }
-});
+// 送信時に呼ばれる: 評価していない最終世代の2枚を記録する
+const recordedFinal = new Set();
+window.recordFinalShown = function () {
+    const p = window.currentPopulation;
+    if (!p) return;
+    const key = `${p.index}:${p.bestChromId}:${p.pickupChromId}`;
+    if (recordedFinal.has(key)) return;
+    recordedFinal.add(key);
+    recordShownPair(p, p.index, { final: true });
+};
