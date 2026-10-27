@@ -287,6 +287,7 @@ async function startGeneration(kuromojiTokenizer, initialText) {
 
                             const draggedChromId = parseInt(e.dataTransfer.getData('text/plain'), 10);
                             if (!isNaN(draggedChromId)) {
+                                recordEvent('drop', { g: population.index, side: isLeftNode ? 'left' : 'right', id: draggedChromId });
                                 if (isLeftNode) {
                                     population.bestChromId = draggedChromId;
                                 } else {
@@ -580,6 +581,7 @@ function enableEvaluateBtn(population, kuromojiTokenizer) {
                         canvasElem.style.boxShadow = "none";
                         const draggedChromId = parseInt(e.dataTransfer.getData('text/plain'), 10);
                         if (!isNaN(draggedChromId)) {
+                            recordEvent('drop', { g: nextPopulation.index, side: isLeftNode ? 'left' : 'right', id: draggedChromId });
                             if (isLeftNode) {
                                 nextPopulation.bestChromId = draggedChromId;
                             } else {
